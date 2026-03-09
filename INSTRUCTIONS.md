@@ -6,8 +6,8 @@ We are building an application called Pantry which will help people keeping trac
 
 The application consists of:
 
-- An API specification written in OAS3, following the JSON-API standard
-- A backend written in Go providing an API for records stored inside a PostgreSQL database and files in an S3 bucket
+- An API specification written in OAS3
+- A backend written in Go providing an API (following the JSON-API standard) for records stored inside a PostgreSQL database and files in an S3 bucket
 - A frontend written in Angular for browsing and managing entries via the API
 
 ## Project Structure

@@ -32,27 +32,40 @@ make run
 3. Check health endpoint:
 
 ```bash
-curl http://localhost:8080/healthz
+curl http://localhost:4000/healthz
 ```
 
-## Example create item request
+## JSON:API example create item request
 
 ```bash
-curl -X POST http://localhost:8080/api/items \
-  -H 'content-type: application/json' \
+curl -X POST http://localhost:4000/api/items \
+  -H 'content-type: application/vnd.api+json' \
   -d '{
-    "name": "Rice",
-    "best_before": "2026-12-31",
-    "content_amount": 500,
-    "content_unit": "grams",
-    "picture_key": "items/rice.png",
-    "comment": "Basmatireis"
+    "data": {
+      "type": "items",
+      "attributes": {
+        "name": "Rice",
+        "best_before": "2026-12-31",
+        "content_amount": 500,
+        "content_unit": "grams",
+        "picture_key": "items/rice.png",
+        "comment": "Basmatireis"
+      }
+    }
   }'
 ```
+
+## JSON:API response shape
+
+- `GET /api/items` returns:
+  - `{ "data": [ { "type": "items", "id": "...", "attributes": { ... } } ] }`
+- `POST /api/items` returns:
+  - `{ "data": { "type": "items", "id": "...", "attributes": { ... } } }`
+- Validation and parsing failures return JSON:API error documents:
+  - `{ "errors": [ { "status": "400", "title": "...", "detail": "..." } ] }`
 
 ## Next steps
 
 - Replace in-memory repository with PostgreSQL-backed repository
 - Add object storage adapter for item pictures in S3
-- Align responses with the JSON-API format from the API spec
 - Add migrations under `migrations/`

@@ -1,27 +1,15 @@
 package id
 
 import (
-	"fmt"
-	"math/rand"
-	"time"
+	"github.com/google/uuid"
 )
 
-var adjectives = []string{"amber", "brisk", "calm", "crisp", "green", "quiet", "solid", "vivid"}
-var nouns = []string{"apple", "barrel", "bottle", "leaf", "plate", "shelf", "spoon", "tin"}
-
-type Generator struct {
-	rnd *rand.Rand
-}
+type Generator struct{}
 
 func NewGenerator() *Generator {
-	return &Generator{
-		rnd: rand.New(rand.NewSource(time.Now().UnixNano())),
-	}
+	return &Generator{}
 }
 
 func (g *Generator) New() string {
-	adjective := adjectives[g.rnd.Intn(len(adjectives))]
-	noun := nouns[g.rnd.Intn(len(nouns))]
-	number := g.rnd.Intn(900) + 100
-	return fmt.Sprintf("%s-%s-%d", adjective, noun, number)
+	return uuid.Must(uuid.NewV7()).String()
 }
