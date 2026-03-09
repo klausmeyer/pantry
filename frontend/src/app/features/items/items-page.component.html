@@ -24,7 +24,33 @@
 
 <section class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4" *ngIf="!loading && !error">
   <article class="card bg-base-200 shadow-xl" *ngFor="let item of items">
-    <div class="card-body">
+    <div class="card-body relative">
+      <div class="absolute right-4 top-4 z-10">
+        <button
+          class="btn btn-xs btn-circle btn-ghost text-error"
+          type="button"
+          [disabled]="deletingIds.has(item.id)"
+          (click)="deleteItem(item.id)"
+          [attr.aria-label]="'Delete ' + item.name"
+          title="Delete"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M3 6h18" />
+            <path d="M8 6V4h8v2" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
+        </button>
+      </div>
       <div class="badge self-start" [class]="bestBeforeBadgeClass(item.bestBefore)">
         {{ bestBeforeLabel(item.bestBefore) }}
       </div>

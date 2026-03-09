@@ -10,6 +10,7 @@ Initial Go backend scaffold for Pantry.
   - `GET /healthz`
   - `GET /api/items`
   - `POST /api/items`
+  - `DELETE /api/items/{id}` (soft delete)
 - PostgreSQL-backed item repository
 - Local dependencies via Docker Compose (PostgreSQL + MinIO)
 
@@ -74,6 +75,9 @@ curl -X POST http://localhost:4000/api/items \
     - default is `sort=id` (ascending)
 - `POST /api/items` returns:
   - `{ "data": { "type": "items", "id": "...", "attributes": { ... } } }`
+- `DELETE /api/items/{id}` performs soft deletion:
+  - returns `204 No Content`
+  - deleted items are excluded from `GET /api/items`
 - `packaging` is required and must be one of:
   - `can | box | bag | jar | other`
 - Validation and parsing failures return JSON:API error documents:

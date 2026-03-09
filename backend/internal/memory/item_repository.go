@@ -30,8 +30,13 @@ func (r *ItemRepository) List(_ context.Context, input repository.ListItemsInput
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	itemsCopy := make([]item.Item, len(r.items))
-	copy(itemsCopy, r.items)
+	itemsCopy := make([]item.Item, 0, len(r.items))
+	for _, stored := range r.items {
+		if stored.DeletedAt != nil {
+			continue
+		}
+		itemsCopy = append(itemsCopy, stored)
+	}
 
 	slices.SortFunc(itemsCopy, func(a, b item.Item) int {
 		for _, sortField := range input.Sort {
@@ -49,6 +54,27 @@ func (r *ItemRepository) List(_ context.Context, input repository.ListItemsInput
 	})
 
 	return itemsCopy, nil
+}
+
+func (r *ItemRepository) SoftDelete(_ context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := time.Now().UTC()
+	for index, stored := range r.items {
+		if stored.ID != id {
+			continue
+		}
+		if stored.DeletedAt != nil {
+			return repository.ErrNotFound
+		}
+		stored.DeletedAt = &now
+		stored.UpdatedAt = now
+		r.items[index] = stored
+		return nil
+	}
+
+	return repository.ErrNotFound
 }
 
 func compareBySortField(a, b item.Item, sortBy repository.ItemSortBy) int {

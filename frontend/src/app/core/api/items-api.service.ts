@@ -27,6 +27,12 @@ export class ItemsApiService {
       .pipe(map((response) => response.data.map((resource) => this.toItem(resource))));
   }
 
+  softDelete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/items/${encodeURIComponent(id)}`, {
+      headers: { Accept: 'application/vnd.api+json' }
+    });
+  }
+
   private toItem(resource: JsonApiItemResource): Item {
     return {
       id: resource.id,

@@ -31,4 +31,5 @@ type Item struct {
 	Comment       *string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	DeletedAt     *time.Time
 }

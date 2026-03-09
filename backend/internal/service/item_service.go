@@ -73,6 +73,13 @@ func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.It
 	})
 }
 
+func (s *ItemService) SoftDelete(ctx context.Context, id string) error {
+	if strings.TrimSpace(id) == "" {
+		return errors.New("id is required")
+	}
+	return s.repo.SoftDelete(ctx, strings.TrimSpace(id))
+}
+
 func normalizeSort(sort []repository.SortField) []repository.SortField {
 	if len(sort) == 0 {
 		return []repository.SortField{

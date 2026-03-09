@@ -186,3 +186,22 @@ func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	httputil.WriteJSONAPI(w, http.StatusCreated, map[string]any{"data": toItemResource(created)})
 }
+
+func (h *ItemsHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimSpace(r.PathValue("id"))
+	if id == "" {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid id", "id path parameter is required")
+		return
+	}
+
+	if err := h.service.SoftDelete(r.Context(), id); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			httputil.WriteJSONAPIError(w, http.StatusNotFound, "not found", "item not found")
+			return
+		}
+		httputil.WriteJSONAPIError(w, http.StatusInternalServerError, "internal error", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

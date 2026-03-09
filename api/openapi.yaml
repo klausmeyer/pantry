@@ -189,6 +189,38 @@ paths:
                   - status: '415'
                     title: unsupported media type
                     detail: content-type must be application/vnd.api+json
+  /api/items/{id}:
+    delete:
+      tags: [Items]
+      summary: Delete a pantry item
+      operationId: deleteItem
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item deleted
+        '404':
+          description: Item not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '404'
+                    title: not found
+                    detail: item not found
+        '500':
+          description: Internal error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
 
 components:
   schemas:

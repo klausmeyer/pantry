@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS items (
   picture_key TEXT NOT NULL,
   comment TEXT,
   created_at TIMESTAMPTZ NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL
+  updated_at TIMESTAMPTZ NOT NULL,
+  deleted_at TIMESTAMPTZ
 );

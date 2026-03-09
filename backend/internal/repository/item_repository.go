@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
 )
@@ -35,4 +36,7 @@ type SortField struct {
 type ItemRepository interface {
 	Create(ctx context.Context, i item.Item) (item.Item, error)
 	List(ctx context.Context, input ListItemsInput) ([]item.Item, error)
+	SoftDelete(ctx context.Context, id string) error
 }
+
+var ErrNotFound = errors.New("item not found")

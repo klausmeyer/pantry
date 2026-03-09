@@ -18,6 +18,7 @@ export class ItemsPageComponent {
   error = '';
   sortBy: ItemSortBy = 'best_before';
   sortOrder: SortOrder = 'asc';
+  deletingIds = new Set<string>();
 
   constructor() {
     this.loadItems();
@@ -31,6 +32,29 @@ export class ItemsPageComponent {
   toggleSortOrder(): void {
     this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
     this.loadItems();
+  }
+
+  deleteItem(id: string): void {
+    if (!id || this.deletingIds.has(id)) {
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this item? This will hide it from the list.');
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingIds.add(id);
+    this.api.softDelete(id).subscribe({
+      next: () => {
+        this.deletingIds.delete(id);
+        this.items = this.items.filter((item) => item.id !== id);
+      },
+      error: () => {
+        this.deletingIds.delete(id);
+        this.error = 'Failed to delete item.';
+      }
+    });
   }
 
   private loadItems(): void {

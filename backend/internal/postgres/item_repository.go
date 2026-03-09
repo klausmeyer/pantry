@@ -22,13 +22,19 @@ CREATE TABLE IF NOT EXISTS items (
   picture_key TEXT NOT NULL,
   comment TEXT,
   created_at TIMESTAMPTZ NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL
+  updated_at TIMESTAMPTZ NOT NULL,
+  deleted_at TIMESTAMPTZ
 );
 `
 
 const ensurePackagingColumnSQL = `
 ALTER TABLE items
 ADD COLUMN IF NOT EXISTS packaging TEXT NOT NULL DEFAULT 'other';
+`
+
+const ensureDeletedAtColumnSQL = `
+ALTER TABLE items
+ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 `
 
 type ItemRepository struct {
@@ -51,6 +57,9 @@ func (r *ItemRepository) ensureSchema(ctx context.Context) error {
 	}
 	if _, err := r.db.ExecContext(ctx, ensurePackagingColumnSQL); err != nil {
 		return fmt.Errorf("ensure packaging column: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, ensureDeletedAtColumnSQL); err != nil {
+		return fmt.Errorf("ensure deleted_at column: %w", err)
 	}
 	return nil
 }
@@ -107,6 +116,7 @@ func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInp
 	query := fmt.Sprintf(`
 SELECT id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
 FROM items
+WHERE deleted_at IS NULL
 ORDER BY %s;
 `, strings.Join(orderBy, ", "))
 
@@ -152,6 +162,29 @@ ORDER BY %s;
 	}
 
 	return items, nil
+}
+
+func (r *ItemRepository) SoftDelete(ctx context.Context, id string) error {
+	const query = `
+UPDATE items
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL;
+`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("soft delete item: %w", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("soft delete item rows affected: %w", err)
+	}
+	if affected == 0 {
+		return repository.ErrNotFound
+	}
+
+	return nil
 }
 
 var sortColumns = map[repository.ItemSortBy]string{
