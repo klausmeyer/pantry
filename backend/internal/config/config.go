@@ -11,6 +11,7 @@ type Config struct {
 	HTTPAddr string
 	DB       DBConfig
 	S3       S3Config
+	Seed     SeedConfig
 }
 
 type DBConfig struct {
@@ -29,6 +30,11 @@ type S3Config struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	UsePathStyle    bool
+}
+
+type SeedConfig struct {
+	DevData      bool
+	DevDataCount int
 }
 
 func Load() (Config, error) {
@@ -50,6 +56,10 @@ func Load() (Config, error) {
 			SecretAccessKey: getenv("S3_SECRET_ACCESS_KEY", "minioadmin"),
 			UsePathStyle:    getenvBool("S3_USE_PATH_STYLE", true),
 		},
+		Seed: SeedConfig{
+			DevData:      getenvBool("SEED_DEV_DATA", false),
+			DevDataCount: getenvInt("SEED_DEV_DATA_COUNT", 100),
+		},
 	}
 
 	if cfg.HTTPAddr == "" {
@@ -57,6 +67,9 @@ func Load() (Config, error) {
 	}
 	if cfg.DB.Port <= 0 {
 		return Config{}, fmt.Errorf("DB_PORT must be positive, got %d", cfg.DB.Port)
+	}
+	if cfg.Seed.DevDataCount <= 0 {
+		return Config{}, fmt.Errorf("SEED_DEV_DATA_COUNT must be positive, got %d", cfg.Seed.DevDataCount)
 	}
 
 	return cfg, nil

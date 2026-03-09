@@ -35,6 +35,14 @@ make run
 curl http://localhost:4000/healthz
 ```
 
+## Development seeds
+
+You can seed dummy data on startup. Seeding runs only if the `items` table is empty.
+
+```bash
+SEED_DEV_DATA=true SEED_DEV_DATA_COUNT=100 make run
+```
+
 ## JSON:API example create item request
 
 ```bash

@@ -1,10 +1,12 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/klausmeyer/pantry/backend/internal/config"
 	"github.com/klausmeyer/pantry/backend/internal/http/handler"
@@ -36,6 +38,17 @@ func New(cfg config.Config) (*App, error) {
 	ids := id.NewGenerator()
 	itemsService := service.NewItemService(repo, ids)
 	itemsHandler := handler.NewItemsHandler(itemsService)
+
+	if cfg.Seed.DevData {
+		seedCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		if err := seedDevelopmentItems(seedCtx, itemsService, cfg.Seed.DevDataCount); err != nil {
+			_ = db.Close()
+			return nil, fmt.Errorf("seed development items: %w", err)
+		}
+		log.Printf("development seeding checked (count=%d)", cfg.Seed.DevDataCount)
+	}
 
 	mux.HandleFunc("GET /healthz", handler.Health())
 	mux.HandleFunc("GET /api/items", itemsHandler.List)
