@@ -115,30 +115,53 @@
   <article class="card bg-base-200 shadow-xl" *ngFor="let item of items">
     <div class="card-body relative">
       <div class="absolute right-4 top-4 z-10">
-        <button
-          class="btn btn-xs btn-circle btn-ghost text-error"
-          type="button"
-          [disabled]="deletingIds.has(item.id)"
-          (click)="deleteItem(item.id)"
-          [attr.aria-label]="'Delete ' + item.name"
-          title="Delete"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            class="h-4 w-4"
-            aria-hidden="true"
+        <div class="flex items-center gap-1">
+          <button
+            class="btn btn-xs btn-circle btn-ghost text-info"
+            type="button"
+            [disabled]="deletingIds.has(item.id)"
+            (click)="openEditModal(item)"
+            [attr.aria-label]="'Edit ' + item.name"
+            title="Edit"
           >
-            <path d="M3 6h18" />
-            <path d="M8 6V4h8v2" />
-            <path d="M19 6l-1 14H6L5 6" />
-            <path d="M10 11v6" />
-            <path d="M14 11v6" />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+            </svg>
+          </button>
+          <button
+            class="btn btn-xs btn-circle btn-ghost text-error"
+            type="button"
+            [disabled]="deletingIds.has(item.id)"
+            (click)="deleteItem(item.id)"
+            [attr.aria-label]="'Delete ' + item.name"
+            title="Delete"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="M19 6l-1 14H6L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="badge self-start" [class]="bestBeforeBadgeClass(item.bestBefore)">
         {{ bestBeforeLabel(item.bestBefore) }}
@@ -162,3 +185,78 @@
     </div>
   </article>
 </section>
+
+<div class="modal" [class.modal-open]="showEditModal">
+  <div class="modal-box max-w-3xl">
+    <h2 class="card-title mb-3">Edit Item</h2>
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Name</span></div>
+        <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.name" name="editName" />
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Best before</span></div>
+        <input class="input input-bordered input-sm" type="date" [(ngModel)]="editItem.bestBefore" name="editBestBefore" />
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Content amount</span></div>
+        <input
+          class="input input-bordered input-sm"
+          type="number"
+          min="0.01"
+          step="0.01"
+          [(ngModel)]="editItem.contentAmount"
+          name="editContentAmount"
+        />
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Content unit</span></div>
+        <select class="select select-bordered select-sm" [(ngModel)]="editItem.contentUnit" name="editContentUnit">
+          <option value="grams">grams</option>
+          <option value="ml">ml</option>
+          <option value="l">l</option>
+        </select>
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Packaging</span></div>
+        <select class="select select-bordered select-sm" [(ngModel)]="editItem.packaging" name="editPackaging">
+          <option value="can">can</option>
+          <option value="box">box</option>
+          <option value="bag">bag</option>
+          <option value="jar">jar</option>
+          <option value="other">other</option>
+        </select>
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Picture key</span></div>
+        <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.pictureKey" name="editPictureKey" />
+      </label>
+    </div>
+
+    <label class="form-control mt-2">
+      <div class="label py-1"><span class="label-text">Comment (optional)</span></div>
+      <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.comment" name="editComment" />
+    </label>
+
+    <div class="alert alert-error mt-4" *ngIf="editError">
+      <span>{{ editError }}</span>
+    </div>
+
+    <div class="modal-action">
+      <button class="btn btn-ghost btn-sm" type="button" [disabled]="editLoading" (click)="closeEditModal()">
+        Cancel
+      </button>
+      <button class="btn btn-primary btn-sm" type="button" [disabled]="editLoading" (click)="updateItem()">
+        {{ editLoading ? 'Saving...' : 'Save changes' }}
+      </button>
+    </div>
+  </div>
+  <button class="modal-backdrop" type="button" [disabled]="editLoading" (click)="closeEditModal()">
+    Close
+  </button>
+</div>

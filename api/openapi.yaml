@@ -190,6 +190,54 @@ paths:
                     title: unsupported media type
                     detail: content-type must be application/vnd.api+json
   /api/items/{id}:
+    patch:
+      tags: [Items]
+      summary: Update a pantry item
+      operationId: updateItem
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemDocument'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ItemSingleDocument'
+        '400':
+          description: Invalid request payload or validation error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+        '404':
+          description: Item not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+        '409':
+          description: Invalid JSON:API resource type or id mismatch
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+        '415':
+          description: Unsupported media type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
     delete:
       tags: [Items]
       summary: Delete a pantry item
@@ -445,6 +493,28 @@ components:
         - content_unit
         - packaging
         - picture_key
+
+    UpdateItemDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/UpdateItemResource'
+      required: [data]
+
+    UpdateItemResource:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [items]
+        id:
+          type: string
+          format: uuid
+        attributes:
+          $ref: '#/components/schemas/CreateItemAttributes'
+      required: [type, id, attributes]
 
     ErrorDocument:
       type: object

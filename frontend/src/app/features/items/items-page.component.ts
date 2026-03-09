@@ -23,7 +23,20 @@ export class ItemsPageComponent {
   createLoading = false;
   createError = '';
   showCreateModal = false;
+  showEditModal = false;
+  editLoading = false;
+  editError = '';
+  editingItemId = '';
   newItem: CreateItemInput = {
+    name: '',
+    bestBefore: '',
+    contentAmount: 1,
+    contentUnit: 'grams',
+    packaging: 'other',
+    pictureKey: '',
+    comment: ''
+  };
+  editItem: CreateItemInput = {
     name: '',
     bestBefore: '',
     contentAmount: 1,
@@ -96,6 +109,48 @@ export class ItemsPageComponent {
       error: () => {
         this.createLoading = false;
         this.createError = 'Failed to create item.';
+      }
+    });
+  }
+
+  openEditModal(item: Item): void {
+    this.editError = '';
+    this.editingItemId = item.id;
+    this.editItem = {
+      name: item.name,
+      bestBefore: item.bestBefore,
+      contentAmount: item.contentAmount,
+      contentUnit: item.contentUnit,
+      packaging: item.packaging,
+      pictureKey: item.pictureKey,
+      comment: item.comment ?? ''
+    };
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    if (this.editLoading) {
+      return;
+    }
+    this.showEditModal = false;
+  }
+
+  updateItem(): void {
+    if (this.editLoading || !this.editingItemId) {
+      return;
+    }
+
+    this.editLoading = true;
+    this.editError = '';
+    this.api.update(this.editingItemId, this.editItem).subscribe({
+      next: () => {
+        this.editLoading = false;
+        this.showEditModal = false;
+        this.loadItems();
+      },
+      error: () => {
+        this.editLoading = false;
+        this.editError = 'Failed to update item.';
       }
     });
   }

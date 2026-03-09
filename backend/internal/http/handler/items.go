@@ -62,6 +62,14 @@ type createItemDocument struct {
 	} `json:"data"`
 }
 
+type updateItemDocument struct {
+	Data struct {
+		Type       string               `json:"type"`
+		ID         string               `json:"id"`
+		Attributes createItemAttributes `json:"attributes"`
+	} `json:"data"`
+}
+
 func toItemResource(i item.Item) itemResource {
 	return itemResource{
 		Type: itemType,
@@ -185,6 +193,60 @@ func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.WriteJSONAPI(w, http.StatusCreated, map[string]any{"data": toItemResource(created)})
+}
+
+func (h *ItemsHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/vnd.api+json" {
+		httputil.WriteJSONAPIError(w, http.StatusUnsupportedMediaType, "unsupported media type", "content-type must be application/vnd.api+json")
+		return
+	}
+
+	id := strings.TrimSpace(r.PathValue("id"))
+	if id == "" {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid id", "id path parameter is required")
+		return
+	}
+
+	var req updateItemDocument
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid request", "request body must be valid JSON:API")
+		return
+	}
+
+	if req.Data.Type != itemType {
+		httputil.WriteJSONAPIError(w, http.StatusConflict, "invalid type", "data.type must be items")
+		return
+	}
+	if strings.TrimSpace(req.Data.ID) != id {
+		httputil.WriteJSONAPIError(w, http.StatusConflict, "invalid id", "data.id must match path id")
+		return
+	}
+
+	bestBefore, err := time.Parse(time.DateOnly, req.Data.Attributes.BestBefore)
+	if err != nil {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid best_before", "best_before must use YYYY-MM-DD")
+		return
+	}
+
+	updated, err := h.service.Update(r.Context(), id, service.CreateItemInput{
+		Name:          req.Data.Attributes.Name,
+		BestBefore:    bestBefore,
+		ContentAmount: req.Data.Attributes.ContentAmount,
+		ContentUnit:   req.Data.Attributes.ContentUnit,
+		Packaging:     req.Data.Attributes.Packaging,
+		PictureKey:    req.Data.Attributes.PictureKey,
+		Comment:       req.Data.Attributes.Comment,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			httputil.WriteJSONAPIError(w, http.StatusNotFound, "not found", "item not found")
+			return
+		}
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "validation error", err.Error())
+		return
+	}
+
+	httputil.WriteJSONAPI(w, http.StatusOK, map[string]any{"data": toItemResource(updated)})
 }
 
 func (h *ItemsHandler) Delete(w http.ResponseWriter, r *http.Request) {

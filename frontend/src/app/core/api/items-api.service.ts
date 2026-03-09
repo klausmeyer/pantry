@@ -29,9 +29,23 @@ export class ItemsApiService {
   }
 
   create(input: CreateItemInput): Observable<Item> {
+    const payload = this.toCreateOrUpdatePayload(input);
+
+    return this.http
+      .post<{ data: JsonApiItemResource }>(`${this.baseUrl}/api/items`, payload, {
+        headers: {
+          Accept: 'application/vnd.api+json',
+          'Content-Type': 'application/vnd.api+json'
+        }
+      })
+      .pipe(map((response) => this.toItem(response.data)));
+  }
+
+  update(id: string, input: CreateItemInput): Observable<Item> {
     const payload = {
       data: {
         type: 'items',
+        id,
         attributes: {
           name: input.name,
           best_before: input.bestBefore,
@@ -45,7 +59,7 @@ export class ItemsApiService {
     };
 
     return this.http
-      .post<{ data: JsonApiItemResource }>(`${this.baseUrl}/api/items`, payload, {
+      .patch<{ data: JsonApiItemResource }>(`${this.baseUrl}/api/items/${encodeURIComponent(id)}`, payload, {
         headers: {
           Accept: 'application/vnd.api+json',
           'Content-Type': 'application/vnd.api+json'
@@ -58,6 +72,36 @@ export class ItemsApiService {
     return this.http.delete<void>(`${this.baseUrl}/api/items/${encodeURIComponent(id)}`, {
       headers: { Accept: 'application/vnd.api+json' }
     });
+  }
+
+  private toCreateOrUpdatePayload(input: CreateItemInput): {
+    data: {
+      type: 'items';
+      attributes: {
+        name: string;
+        best_before: string;
+        content_amount: number;
+        content_unit: CreateItemInput['contentUnit'];
+        packaging: CreateItemInput['packaging'];
+        picture_key: string;
+        comment: string | null;
+      };
+    };
+  } {
+    return {
+      data: {
+        type: 'items',
+        attributes: {
+          name: input.name,
+          best_before: input.bestBefore,
+          content_amount: input.contentAmount,
+          content_unit: input.contentUnit,
+          packaging: input.packaging,
+          picture_key: input.pictureKey,
+          comment: input.comment?.trim() ? input.comment : null
+        }
+      }
+    };
   }
 
   private toItem(resource: JsonApiItemResource): Item {

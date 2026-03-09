@@ -35,19 +35,8 @@ func NewItemService(repo repository.ItemRepository, ids *id.Generator) *ItemServ
 }
 
 func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.Item, error) {
-	if strings.TrimSpace(input.Name) == "" {
-		return item.Item{}, errors.New("name is required")
-	}
-	if input.ContentAmount <= 0 {
-		return item.Item{}, errors.New("content_amount must be greater than 0")
-	}
-	if input.ContentUnit == "" {
-		return item.Item{}, errors.New("content_unit is required")
-	}
-	switch input.Packaging {
-	case item.PackagingCan, item.PackagingBox, item.PackagingBag, item.PackagingJar, item.PackagingOther:
-	default:
-		return item.Item{}, errors.New("packaging must be one of can, box, bag, jar, other")
+	if err := validateCreateOrUpdateInput(input); err != nil {
+		return item.Item{}, err
 	}
 
 	now := time.Now().UTC()
@@ -65,6 +54,48 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 	}
 
 	return s.repo.Create(ctx, created)
+}
+
+func (s *ItemService) Update(ctx context.Context, id string, input CreateItemInput) (item.Item, error) {
+	if strings.TrimSpace(id) == "" {
+		return item.Item{}, errors.New("id is required")
+	}
+	if err := validateCreateOrUpdateInput(input); err != nil {
+		return item.Item{}, err
+	}
+
+	now := time.Now().UTC()
+	updated := item.Item{
+		ID:            strings.TrimSpace(id),
+		Name:          strings.TrimSpace(input.Name),
+		BestBefore:    input.BestBefore,
+		ContentAmount: input.ContentAmount,
+		ContentUnit:   input.ContentUnit,
+		Packaging:     input.Packaging,
+		PictureKey:    strings.TrimSpace(input.PictureKey),
+		Comment:       input.Comment,
+		UpdatedAt:     now,
+	}
+
+	return s.repo.Update(ctx, updated)
+}
+
+func validateCreateOrUpdateInput(input CreateItemInput) error {
+	if strings.TrimSpace(input.Name) == "" {
+		return errors.New("name is required")
+	}
+	if input.ContentAmount <= 0 {
+		return errors.New("content_amount must be greater than 0")
+	}
+	if input.ContentUnit == "" {
+		return errors.New("content_unit is required")
+	}
+	switch input.Packaging {
+	case item.PackagingCan, item.PackagingBox, item.PackagingBag, item.PackagingJar, item.PackagingOther:
+	default:
+		return errors.New("packaging must be one of can, box, bag, jar, other")
+	}
+	return nil
 }
 
 func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {

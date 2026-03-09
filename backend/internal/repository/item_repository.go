@@ -35,6 +35,7 @@ type SortField struct {
 
 type ItemRepository interface {
 	Create(ctx context.Context, i item.Item) (item.Item, error)
+	Update(ctx context.Context, i item.Item) (item.Item, error)
 	List(ctx context.Context, input ListItemsInput) ([]item.Item, error)
 	SoftDelete(ctx context.Context, id string) error
 }

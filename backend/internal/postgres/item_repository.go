@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
 	"github.com/klausmeyer/pantry/backend/internal/repository"
@@ -88,6 +90,47 @@ INSERT INTO items (
 		return item.Item{}, fmt.Errorf("insert item: %w", err)
 	}
 
+	return i, nil
+}
+
+func (r *ItemRepository) Update(ctx context.Context, i item.Item) (item.Item, error) {
+	const query = `
+UPDATE items
+SET
+  name = $2,
+  best_before = $3,
+  content_amount = $4,
+  content_unit = $5,
+  packaging = $6,
+  picture_key = $7,
+  comment = $8,
+  updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING created_at, updated_at;
+`
+
+	var createdAt time.Time
+	var updatedAt time.Time
+	if err := r.db.QueryRowContext(
+		ctx,
+		query,
+		i.ID,
+		i.Name,
+		i.BestBefore,
+		i.ContentAmount,
+		i.ContentUnit,
+		i.Packaging,
+		i.PictureKey,
+		i.Comment,
+	).Scan(&createdAt, &updatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return item.Item{}, repository.ErrNotFound
+		}
+		return item.Item{}, fmt.Errorf("update item: %w", err)
+	}
+
+	i.CreatedAt = createdAt
+	i.UpdatedAt = updatedAt
 	return i, nil
 }
 

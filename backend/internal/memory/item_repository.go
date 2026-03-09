@@ -26,6 +26,30 @@ func (r *ItemRepository) Create(_ context.Context, i item.Item) (item.Item, erro
 	return i, nil
 }
 
+func (r *ItemRepository) Update(_ context.Context, i item.Item) (item.Item, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for index, stored := range r.items {
+		if stored.ID != i.ID || stored.DeletedAt != nil {
+			continue
+		}
+
+		stored.Name = i.Name
+		stored.BestBefore = i.BestBefore
+		stored.ContentAmount = i.ContentAmount
+		stored.ContentUnit = i.ContentUnit
+		stored.Packaging = i.Packaging
+		stored.PictureKey = i.PictureKey
+		stored.Comment = i.Comment
+		stored.UpdatedAt = i.UpdatedAt
+		r.items[index] = stored
+		return stored, nil
+	}
+
+	return item.Item{}, repository.ErrNotFound
+}
+
 func (r *ItemRepository) List(_ context.Context, input repository.ListItemsInput) ([]item.Item, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

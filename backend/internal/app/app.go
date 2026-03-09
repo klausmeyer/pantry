@@ -53,6 +53,7 @@ func New(cfg config.Config) (*App, error) {
 	mux.HandleFunc("GET /healthz", handler.Health())
 	mux.HandleFunc("GET /api/items", itemsHandler.List)
 	mux.HandleFunc("POST /api/items", itemsHandler.Create)
+	mux.HandleFunc("PATCH /api/items/{id}", itemsHandler.Update)
 	mux.HandleFunc("DELETE /api/items/{id}", itemsHandler.Delete)
 
 	log.Printf("db configured for %s:%d/%s", cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)
@@ -75,7 +76,7 @@ func (a *App) Close() error {
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type")
 		w.Header().Set("Vary", "Origin, Access-Control-Request-Method, Access-Control-Request-Headers")
 
