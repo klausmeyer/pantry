@@ -51,4 +51,38 @@ export class ItemsPageComponent {
         this.loading = false;
       });
   }
+
+  bestBeforeDeltaDays(bestBefore: string): number {
+    const today = this.startOfUTCDate(new Date());
+    const target = this.startOfUTCDate(new Date(`${bestBefore}T00:00:00Z`));
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((target.getTime() - today.getTime()) / msPerDay);
+  }
+
+  bestBeforeBadgeClass(bestBefore: string): string {
+    const delta = this.bestBeforeDeltaDays(bestBefore);
+    if (delta < 0) {
+      return 'badge-error';
+    }
+    if (delta <= 14) {
+      return 'badge-warning';
+    }
+    return 'badge-success';
+  }
+
+  bestBeforeLabel(bestBefore: string): string {
+    const delta = this.bestBeforeDeltaDays(bestBefore);
+    if (delta < 0) {
+      const days = Math.abs(delta);
+      return `${days} day${days === 1 ? '' : 's'} overdue`;
+    }
+    if (delta === 0) {
+      return 'expires today';
+    }
+    return `${delta} day${delta === 1 ? '' : 's'} left`;
+  }
+
+  private startOfUTCDate(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  }
 }

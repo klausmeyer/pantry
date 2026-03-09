@@ -40,10 +40,13 @@
 <section class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4" *ngIf="!loading && !error">
   <article class="card bg-base-200 shadow-xl" *ngFor="let item of items">
     <div class="card-body">
-      <div class="badge badge-secondary badge-outline font-mono">
-        {{ item.contentAmount }} {{ item.contentUnit }}
+      <div class="badge self-start" [class]="bestBeforeBadgeClass(item.bestBefore)">
+        {{ bestBeforeLabel(item.bestBefore) }}
       </div>
       <h2 class="card-title">{{ item.name }}</h2>
+      <div class="badge badge-secondary badge-outline self-start font-mono">
+        {{ item.contentAmount }} {{ item.contentUnit }}
+      </div>
       <p>Best before: {{ item.bestBefore }}</p>
       <p *ngIf="item.comment">{{ item.comment }}</p>
     </div>
