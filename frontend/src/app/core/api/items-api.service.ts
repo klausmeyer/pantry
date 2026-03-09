@@ -1,0 +1,32 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { map, Observable } from 'rxjs';
+import { Item, JsonApiItemResource, JsonApiListResponse } from '../models/item';
+
+@Injectable({ providedIn: 'root' })
+export class ItemsApiService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = 'http://localhost:4000';
+
+  list(): Observable<Item[]> {
+    return this.http
+      .get<JsonApiListResponse>(`${this.baseUrl}/api/items`, {
+        headers: { Accept: 'application/vnd.api+json' }
+      })
+      .pipe(map((response) => response.data.map((resource) => this.toItem(resource))));
+  }
+
+  private toItem(resource: JsonApiItemResource): Item {
+    return {
+      id: resource.id,
+      name: resource.attributes.name,
+      bestBefore: resource.attributes.best_before,
+      contentAmount: resource.attributes.content_amount,
+      contentUnit: resource.attributes.content_unit,
+      pictureKey: resource.attributes.picture_key,
+      comment: resource.attributes.comment,
+      createdAt: resource.attributes.created_at,
+      updatedAt: resource.attributes.updated_at
+    };
+  }
+}

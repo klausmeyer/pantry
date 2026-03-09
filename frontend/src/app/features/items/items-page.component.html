@@ -1,0 +1,22 @@
+<section class="hero">
+  <p class="eyebrow">Pantry</p>
+  <h1>Track your shelf life before your shelf life tracks you.</h1>
+  <p class="lead">Angular frontend bootstrapped and connected to the JSON:API backend.</p>
+</section>
+
+<section class="panel" *ngIf="loading">Loading items...</section>
+<section class="panel error" *ngIf="!loading && error">{{ error }}</section>
+
+<section class="grid" *ngIf="!loading && !error">
+  <article class="card" *ngFor="let item of items">
+    <p class="pill">{{ item.contentAmount }} {{ item.contentUnit }}</p>
+    <h2>{{ item.name }}</h2>
+    <p>Best before: {{ item.bestBefore }}</p>
+    <p *ngIf="item.comment">{{ item.comment }}</p>
+  </article>
+
+  <article class="card empty" *ngIf="items.length === 0">
+    <h2>No items yet</h2>
+    <p>Create your first item through the API and refresh.</p>
+  </article>
+</section>
