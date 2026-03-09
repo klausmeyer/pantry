@@ -21,6 +21,29 @@ Pantry helps you track household food supplies with a JSON:API backend and an An
 3. Review the contract and examples  
    Use [`api/openapi.yaml`](api/openapi.yaml).
 
+## Docker Deployment
+
+Build and run the full stack (frontend, backend, PostgreSQL, MinIO):
+
+```bash
+docker compose up --build -d
+```
+
+Endpoints:
+
+- Frontend: `http://localhost:8080`
+- Backend API: `http://localhost:4000`
+- MinIO API: `http://localhost:9000`
+- MinIO Console: `http://localhost:9001`
+
+Stop everything:
+
+```bash
+docker compose down
+```
+
+The frontend container proxies `/api/*` and `/healthz` to the backend container.
+
 ## Development Notes
 
 - API media type: `application/vnd.api+json`

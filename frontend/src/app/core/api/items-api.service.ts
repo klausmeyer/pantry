@@ -13,13 +13,13 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ItemsApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:4000';
+  private readonly baseUrl = this.resolveBaseUrl();
 
   list(sortBy: ItemSortBy, sortOrder: SortOrder): Observable<Item[]> {
     const sort = sortOrder === 'desc' ? `-${sortBy}` : sortBy;
 
     return this.http
-      .get<JsonApiListResponse>(`${this.baseUrl}/api/items`, {
+      .get<JsonApiListResponse>(`${this.baseUrl}/items`, {
         headers: { Accept: 'application/vnd.api+json' },
         params: {
           sort
@@ -32,7 +32,7 @@ export class ItemsApiService {
     const payload = this.toCreateOrUpdatePayload(input);
 
     return this.http
-      .post<{ data: JsonApiItemResource }>(`${this.baseUrl}/api/items`, payload, {
+      .post<{ data: JsonApiItemResource }>(`${this.baseUrl}/items`, payload, {
         headers: {
           Accept: 'application/vnd.api+json',
           'Content-Type': 'application/vnd.api+json'
@@ -59,7 +59,7 @@ export class ItemsApiService {
     };
 
     return this.http
-      .patch<{ data: JsonApiItemResource }>(`${this.baseUrl}/api/items/${encodeURIComponent(id)}`, payload, {
+      .patch<{ data: JsonApiItemResource }>(`${this.baseUrl}/items/${encodeURIComponent(id)}`, payload, {
         headers: {
           Accept: 'application/vnd.api+json',
           'Content-Type': 'application/vnd.api+json'
@@ -69,9 +69,16 @@ export class ItemsApiService {
   }
 
   softDelete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/items/${encodeURIComponent(id)}`, {
+    return this.http.delete<void>(`${this.baseUrl}/items/${encodeURIComponent(id)}`, {
       headers: { Accept: 'application/vnd.api+json' }
     });
+  }
+
+  private resolveBaseUrl(): string {
+    if (typeof window !== 'undefined' && window.location.port === '4200') {
+      return 'http://localhost:4000/api';
+    }
+    return '/api';
   }
 
   private toCreateOrUpdatePayload(input: CreateItemInput): {
