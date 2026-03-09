@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
-import { Item, ItemSortBy, SortOrder } from '../../core/models/item';
+import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-items-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './items-page.component.html'
 })
 export class ItemsPageComponent {
@@ -19,6 +20,18 @@ export class ItemsPageComponent {
   sortBy: ItemSortBy = 'best_before';
   sortOrder: SortOrder = 'asc';
   deletingIds = new Set<string>();
+  createLoading = false;
+  createError = '';
+  showCreateModal = false;
+  newItem: CreateItemInput = {
+    name: '',
+    bestBefore: '',
+    contentAmount: 1,
+    contentUnit: 'grams',
+    packaging: 'other',
+    pictureKey: '',
+    comment: ''
+  };
 
   constructor() {
     this.loadItems();
@@ -55,6 +68,48 @@ export class ItemsPageComponent {
         this.error = 'Failed to delete item.';
       }
     });
+  }
+
+  createItem(): void {
+    if (this.createLoading) {
+      return;
+    }
+
+    this.createLoading = true;
+    this.createError = '';
+
+    this.api.create(this.newItem).subscribe({
+      next: () => {
+        this.createLoading = false;
+        this.showCreateModal = false;
+        this.newItem = {
+          name: '',
+          bestBefore: '',
+          contentAmount: 1,
+          contentUnit: this.newItem.contentUnit,
+          packaging: this.newItem.packaging,
+          pictureKey: '',
+          comment: ''
+        };
+        this.loadItems();
+      },
+      error: () => {
+        this.createLoading = false;
+        this.createError = 'Failed to create item.';
+      }
+    });
+  }
+
+  openCreateModal(): void {
+    this.createError = '';
+    this.showCreateModal = true;
+  }
+
+  closeCreateModal(): void {
+    if (this.createLoading) {
+      return;
+    }
+    this.showCreateModal = false;
   }
 
   private loadItems(): void {

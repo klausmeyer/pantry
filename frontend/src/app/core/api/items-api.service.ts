@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import {
+  CreateItemInput,
   Item,
   ItemSortBy,
   JsonApiItemResource,
@@ -25,6 +26,32 @@ export class ItemsApiService {
         }
       })
       .pipe(map((response) => response.data.map((resource) => this.toItem(resource))));
+  }
+
+  create(input: CreateItemInput): Observable<Item> {
+    const payload = {
+      data: {
+        type: 'items',
+        attributes: {
+          name: input.name,
+          best_before: input.bestBefore,
+          content_amount: input.contentAmount,
+          content_unit: input.contentUnit,
+          packaging: input.packaging,
+          picture_key: input.pictureKey,
+          comment: input.comment?.trim() ? input.comment : null
+        }
+      }
+    };
+
+    return this.http
+      .post<{ data: JsonApiItemResource }>(`${this.baseUrl}/api/items`, payload, {
+        headers: {
+          Accept: 'application/vnd.api+json',
+          'Content-Type': 'application/vnd.api+json'
+        }
+      })
+      .pipe(map((response) => this.toItem(response.data)));
   }
 
   softDelete(id: string): Observable<void> {

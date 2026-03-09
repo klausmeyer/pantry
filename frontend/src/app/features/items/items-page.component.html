@@ -1,19 +1,108 @@
-<section class="mb-4 flex flex-wrap items-center gap-3">
-  <label class="form-control w-60">
+<section class="mb-4 flex flex-wrap items-end gap-3">
+  <div class="form-control w-auto self-end">
     <div class="label py-1">
-      <span class="label-text">Sort by</span>
+      <span class="label-text invisible">Action</span>
     </div>
-    <select class="select select-bordered select-sm" [value]="sortBy" (change)="onSortByChange($any($event.target).value)">
-      <option value="name">Name</option>
-      <option value="best_before">Best before</option>
-      <option value="created_at">Created at</option>
-      <option value="updated_at">Updated at</option>
-    </select>
-  </label>
-  <button class="btn btn-sm btn-outline mt-6" type="button" (click)="toggleSortOrder()">
-    Order: {{ sortOrder === 'asc' ? 'ASC' : 'DESC' }}
-  </button>
+    <button class="btn btn-primary btn-sm" type="button" (click)="openCreateModal()">Add item</button>
+  </div>
+
+  <div class="ml-auto flex flex-wrap items-end gap-3">
+    <label class="form-control w-60">
+      <div class="label py-1">
+        <span class="label-text">Sort by</span>
+      </div>
+      <select class="select select-bordered select-sm" [value]="sortBy" (change)="onSortByChange($any($event.target).value)">
+        <option value="name">Name</option>
+        <option value="best_before">Best before</option>
+        <option value="created_at">Created at</option>
+        <option value="updated_at">Updated at</option>
+      </select>
+    </label>
+    <div class="form-control w-auto self-end">
+      <div class="label py-1">
+        <span class="label-text invisible">Order</span>
+      </div>
+      <button class="btn btn-sm btn-outline" type="button" (click)="toggleSortOrder()">
+        Order: {{ sortOrder === 'asc' ? 'ASC' : 'DESC' }}
+      </button>
+    </div>
+  </div>
 </section>
+
+<div class="modal" [class.modal-open]="showCreateModal">
+  <div class="modal-box max-w-3xl">
+    <h2 class="card-title mb-3">Add Item</h2>
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Name</span></div>
+        <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.name" name="name" />
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Best before</span></div>
+        <input class="input input-bordered input-sm" type="date" [(ngModel)]="newItem.bestBefore" name="bestBefore" />
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Content amount</span></div>
+        <input
+          class="input input-bordered input-sm"
+          type="number"
+          min="0.01"
+          step="0.01"
+          [(ngModel)]="newItem.contentAmount"
+          name="contentAmount"
+        />
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Content unit</span></div>
+        <select class="select select-bordered select-sm" [(ngModel)]="newItem.contentUnit" name="contentUnit">
+          <option value="grams">grams</option>
+          <option value="ml">ml</option>
+          <option value="l">l</option>
+        </select>
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Packaging</span></div>
+        <select class="select select-bordered select-sm" [(ngModel)]="newItem.packaging" name="packaging">
+          <option value="can">can</option>
+          <option value="box">box</option>
+          <option value="bag">bag</option>
+          <option value="jar">jar</option>
+          <option value="other">other</option>
+        </select>
+      </label>
+
+      <label class="form-control">
+        <div class="label py-1"><span class="label-text">Picture key</span></div>
+        <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.pictureKey" name="pictureKey" />
+      </label>
+    </div>
+
+    <label class="form-control mt-2">
+      <div class="label py-1"><span class="label-text">Comment (optional)</span></div>
+      <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
+    </label>
+
+    <div class="alert alert-error mt-4" *ngIf="createError">
+      <span>{{ createError }}</span>
+    </div>
+
+    <div class="modal-action">
+      <button class="btn btn-ghost btn-sm" type="button" [disabled]="createLoading" (click)="closeCreateModal()">
+        Cancel
+      </button>
+      <button class="btn btn-primary btn-sm" type="button" [disabled]="createLoading" (click)="createItem()">
+        {{ createLoading ? 'Creating...' : 'Add item' }}
+      </button>
+    </div>
+  </div>
+  <button class="modal-backdrop" type="button" [disabled]="createLoading" (click)="closeCreateModal()">
+    Close
+  </button>
+</div>
 
 <section class="alert mb-4 shadow-lg" *ngIf="loading">
   <span>Loading items...</span>

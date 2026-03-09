@@ -38,3 +38,13 @@ export interface JsonApiListResponse {
 
 export type ItemSortBy = 'name' | 'best_before' | 'created_at' | 'updated_at';
 export type SortOrder = 'asc' | 'desc';
+
+export interface CreateItemInput {
+  name: string;
+  bestBefore: string;
+  contentAmount: number;
+  contentUnit: ContentUnit;
+  packaging: Packaging;
+  pictureKey: string;
+  comment?: string;
+}
