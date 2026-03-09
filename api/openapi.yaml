@@ -26,6 +26,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/HealthDocument'
+              example:
+                meta:
+                  status: ok
   /api/items:
     get:
       tags: [Items]
@@ -38,12 +41,44 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ItemListDocument'
+              examples:
+                twoItems:
+                  summary: Two pantry items
+                  value:
+                    data:
+                      - type: items
+                        id: 019579e0-c393-7f0c-8f04-2ad9549f2772
+                        attributes:
+                          name: Rice
+                          best_before: '2026-12-31'
+                          content_amount: 500
+                          content_unit: grams
+                          picture_key: items/rice.png
+                          comment: Basmati
+                          created_at: '2026-03-09T20:51:00Z'
+                          updated_at: '2026-03-09T20:51:00Z'
+                      - type: items
+                        id: 019579e0-c39a-7a44-8d74-a8a1892d5b1d
+                        attributes:
+                          name: Milk
+                          best_before: '2026-03-14'
+                          content_amount: 1
+                          content_unit: l
+                          picture_key: items/milk.png
+                          comment: null
+                          created_at: '2026-03-09T20:52:00Z'
+                          updated_at: '2026-03-09T20:52:00Z'
         '500':
           description: Internal error
           content:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '500'
+                    title: internal error
+                    detail: database unavailable
     post:
       tags: [Items]
       summary: Create a pantry item
@@ -54,6 +89,19 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/schemas/CreateItemDocument'
+            examples:
+              rice:
+                summary: Create rice item
+                value:
+                  data:
+                    type: items
+                    attributes:
+                      name: Rice
+                      best_before: '2026-12-31'
+                      content_amount: 500
+                      content_unit: grams
+                      picture_key: items/rice.png
+                      comment: Basmati
       responses:
         '201':
           description: Item created
@@ -61,30 +109,69 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ItemSingleDocument'
+              example:
+                data:
+                  type: items
+                  id: 019579e0-c3b5-7424-bf89-ae567634a2ff
+                  attributes:
+                    name: Rice
+                    best_before: '2026-12-31'
+                    content_amount: 500
+                    content_unit: grams
+                    picture_key: items/rice.png
+                    comment: Basmati
+                    created_at: '2026-03-09T20:55:00Z'
+                    updated_at: '2026-03-09T20:55:00Z'
         '400':
           description: Invalid request payload or validation error
           content:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ErrorDocument'
+              examples:
+                invalidDate:
+                  value:
+                    errors:
+                      - status: '400'
+                        title: invalid best_before
+                        detail: best_before must use YYYY-MM-DD
+                validation:
+                  value:
+                    errors:
+                      - status: '400'
+                        title: validation error
+                        detail: name is required
         '409':
           description: Invalid JSON:API resource type
           content:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '409'
+                    title: invalid type
+                    detail: data.type must be items
         '415':
           description: Unsupported media type
           content:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '415'
+                    title: unsupported media type
+                    detail: content-type must be application/vnd.api+json
 
 components:
   schemas:
     HealthDocument:
       type: object
       additionalProperties: false
+      example:
+        meta:
+          status: ok
       properties:
         meta:
           type: object
@@ -99,6 +186,18 @@ components:
     ItemResource:
       type: object
       additionalProperties: false
+      example:
+        type: items
+        id: 019579e0-c393-7f0c-8f04-2ad9549f2772
+        attributes:
+          name: Rice
+          best_before: '2026-12-31'
+          content_amount: 500
+          content_unit: grams
+          picture_key: items/rice.png
+          comment: Basmati
+          created_at: '2026-03-09T20:51:00Z'
+          updated_at: '2026-03-09T20:51:00Z'
       properties:
         type:
           type: string
@@ -114,6 +213,15 @@ components:
     ItemAttributes:
       type: object
       additionalProperties: false
+      example:
+        name: Rice
+        best_before: '2026-12-31'
+        content_amount: 500
+        content_unit: grams
+        picture_key: items/rice.png
+        comment: Basmati
+        created_at: '2026-03-09T20:51:00Z'
+        updated_at: '2026-03-09T20:51:00Z'
       properties:
         name:
           type: string
@@ -129,8 +237,9 @@ components:
         picture_key:
           type: string
         comment:
-          type: string
-          nullable: true
+          type:
+            - string
+            - 'null'
         created_at:
           type: string
           format: date-time
@@ -149,6 +258,19 @@ components:
     ItemListDocument:
       type: object
       additionalProperties: false
+      example:
+        data:
+          - type: items
+            id: 019579e0-c393-7f0c-8f04-2ad9549f2772
+            attributes:
+              name: Rice
+              best_before: '2026-12-31'
+              content_amount: 500
+              content_unit: grams
+              picture_key: items/rice.png
+              comment: Basmati
+              created_at: '2026-03-09T20:51:00Z'
+              updated_at: '2026-03-09T20:51:00Z'
       properties:
         data:
           type: array
@@ -159,6 +281,19 @@ components:
     ItemSingleDocument:
       type: object
       additionalProperties: false
+      example:
+        data:
+          type: items
+          id: 019579e0-c3b5-7424-bf89-ae567634a2ff
+          attributes:
+            name: Rice
+            best_before: '2026-12-31'
+            content_amount: 500
+            content_unit: grams
+            picture_key: items/rice.png
+            comment: Basmati
+            created_at: '2026-03-09T20:55:00Z'
+            updated_at: '2026-03-09T20:55:00Z'
       properties:
         data:
           $ref: '#/components/schemas/ItemResource'
@@ -167,6 +302,16 @@ components:
     CreateItemDocument:
       type: object
       additionalProperties: false
+      example:
+        data:
+          type: items
+          attributes:
+            name: Rice
+            best_before: '2026-12-31'
+            content_amount: 500
+            content_unit: grams
+            picture_key: items/rice.png
+            comment: Basmati
       properties:
         data:
           $ref: '#/components/schemas/CreateItemResource'
@@ -175,6 +320,15 @@ components:
     CreateItemResource:
       type: object
       additionalProperties: false
+      example:
+        type: items
+        attributes:
+          name: Rice
+          best_before: '2026-12-31'
+          content_amount: 500
+          content_unit: grams
+          picture_key: items/rice.png
+          comment: Basmati
       properties:
         type:
           type: string
@@ -186,6 +340,13 @@ components:
     CreateItemAttributes:
       type: object
       additionalProperties: false
+      example:
+        name: Rice
+        best_before: '2026-12-31'
+        content_amount: 500
+        content_unit: grams
+        picture_key: items/rice.png
+        comment: Basmati
       properties:
         name:
           type: string
@@ -202,8 +363,9 @@ components:
         picture_key:
           type: string
         comment:
-          type: string
-          nullable: true
+          type:
+            - string
+            - 'null'
       required:
         - name
         - best_before
@@ -214,6 +376,11 @@ components:
     ErrorDocument:
       type: object
       additionalProperties: false
+      example:
+        errors:
+          - status: '400'
+            title: validation error
+            detail: name is required
       properties:
         errors:
           type: array
@@ -225,6 +392,10 @@ components:
     ErrorObject:
       type: object
       additionalProperties: false
+      example:
+        status: '400'
+        title: validation error
+        detail: name is required
       properties:
         status:
           type: string
