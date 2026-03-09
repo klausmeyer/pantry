@@ -63,6 +63,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: pantry-frontend
+    environment:
+      BACKEND_UPSTREAM: backend:4000
     depends_on:
       backend:
         condition: service_started
@@ -72,4 +74,3 @@ services:
 volumes:
   pantry_pg_data:
   pantry_minio_data:
-

@@ -15,9 +15,10 @@ RUN npm run build && \
     fi
 
 FROM nginx:1.27-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV BACKEND_UPSTREAM=backend:4000
+ENV NGINX_ENVSUBST_FILTER=BACKEND_UPSTREAM
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /tmp/frontend-dist/ /usr/share/nginx/html/
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-
