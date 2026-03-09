@@ -1,0 +1,18 @@
+Pantry has been deployed.
+
+Frontend service:
+  {{ include "pantry.frontendName" . }}:{{ .Values.frontend.service.port }}
+
+Backend service:
+  {{ include "pantry.backendName" . }}:{{ .Values.backend.service.port }}
+
+{{- if .Values.ingress.enabled }}
+Ingress hosts:
+{{- range .Values.ingress.hosts }}
+  - http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+To access locally:
+  kubectl port-forward svc/{{ include "pantry.frontendName" . }} 8080:{{ .Values.frontend.service.port }}
+{{- end }}
+
