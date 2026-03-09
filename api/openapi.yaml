@@ -1,0 +1,235 @@
+openapi: 3.1.0
+info:
+  title: Pantry API
+  version: 0.1.0
+  description: |
+    API for Pantry. Responses and request bodies for item resources follow JSON:API media type
+    (`application/vnd.api+json`).
+servers:
+  - url: http://localhost:4000
+    description: Local development
+
+tags:
+  - name: Health
+  - name: Items
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/HealthDocument'
+  /api/items:
+    get:
+      tags: [Items]
+      summary: List pantry items
+      operationId: listItems
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ItemListDocument'
+        '500':
+          description: Internal error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+    post:
+      tags: [Items]
+      summary: Create a pantry item
+      operationId: createItem
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/CreateItemDocument'
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ItemSingleDocument'
+        '400':
+          description: Invalid request payload or validation error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+        '409':
+          description: Invalid JSON:API resource type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+        '415':
+          description: Unsupported media type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+
+components:
+  schemas:
+    HealthDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        meta:
+          type: object
+          additionalProperties: false
+          properties:
+            status:
+              type: string
+              enum: [ok]
+          required: [status]
+      required: [meta]
+
+    ItemResource:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [items]
+        id:
+          type: string
+          description: UUIDv7 identifier
+          format: uuid
+        attributes:
+          $ref: '#/components/schemas/ItemAttributes'
+      required: [type, id, attributes]
+
+    ItemAttributes:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        best_before:
+          type: string
+          format: date
+        content_amount:
+          type: number
+          exclusiveMinimum: 0
+        content_unit:
+          type: string
+          enum: [grams, ml, l]
+        picture_key:
+          type: string
+        comment:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - name
+        - best_before
+        - content_amount
+        - content_unit
+        - picture_key
+        - created_at
+        - updated_at
+
+    ItemListDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemResource'
+      required: [data]
+
+    ItemSingleDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/ItemResource'
+      required: [data]
+
+    CreateItemDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/CreateItemResource'
+      required: [data]
+
+    CreateItemResource:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [items]
+        attributes:
+          $ref: '#/components/schemas/CreateItemAttributes'
+      required: [type, attributes]
+
+    CreateItemAttributes:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+        best_before:
+          type: string
+          format: date
+        content_amount:
+          type: number
+          exclusiveMinimum: 0
+        content_unit:
+          type: string
+          enum: [grams, ml, l]
+        picture_key:
+          type: string
+        comment:
+          type: string
+          nullable: true
+      required:
+        - name
+        - best_before
+        - content_amount
+        - content_unit
+        - picture_key
+
+    ErrorDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        errors:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ErrorObject'
+      required: [errors]
+
+    ErrorObject:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+        title:
+          type: string
+        detail:
+          type: string
+      required: [status, title, detail]
