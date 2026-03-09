@@ -20,7 +20,16 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	application := app.New(cfg)
+	application, err := app.New(cfg)
+	if err != nil {
+		log.Fatalf("init app: %v", err)
+	}
+	defer func() {
+		if err := application.Close(); err != nil {
+			log.Printf("close app resources: %v", err)
+		}
+	}()
+
 	server := &http.Server{
 		Addr:         cfg.HTTPAddr,
 		Handler:      application.Router(),

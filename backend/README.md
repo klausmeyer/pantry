@@ -10,7 +10,7 @@ Initial Go backend scaffold for Pantry.
   - `GET /healthz`
   - `GET /api/items`
   - `POST /api/items`
-- In-memory item repository (temporary while Postgres integration is added)
+- PostgreSQL-backed item repository
 - Local dependencies via Docker Compose (PostgreSQL + MinIO)
 
 ## Quick start
@@ -66,6 +66,5 @@ curl -X POST http://localhost:4000/api/items \
 
 ## Next steps
 
-- Replace in-memory repository with PostgreSQL-backed repository
 - Add object storage adapter for item pictures in S3
 - Add migrations under `migrations/`

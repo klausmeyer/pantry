@@ -1,25 +1,38 @@
 package app
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/klausmeyer/pantry/backend/internal/config"
 	"github.com/klausmeyer/pantry/backend/internal/http/handler"
 	"github.com/klausmeyer/pantry/backend/internal/id"
-	"github.com/klausmeyer/pantry/backend/internal/memory"
+	"github.com/klausmeyer/pantry/backend/internal/postgres"
 	"github.com/klausmeyer/pantry/backend/internal/service"
 )
 
 type App struct {
 	cfg    config.Config
 	router http.Handler
+	db     *sql.DB
 }
 
-func New(cfg config.Config) *App {
+func New(cfg config.Config) (*App, error) {
 	mux := http.NewServeMux()
 
-	repo := memory.NewItemRepository()
+	db, err := postgres.OpenDB(cfg.DB)
+	if err != nil {
+		return nil, fmt.Errorf("init postgres db: %w", err)
+	}
+
+	repo, err := postgres.NewItemRepository(db)
+	if err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("init postgres item repository: %w", err)
+	}
+
 	ids := id.NewGenerator()
 	itemsService := service.NewItemService(repo, ids)
 	itemsHandler := handler.NewItemsHandler(itemsService)
@@ -31,9 +44,16 @@ func New(cfg config.Config) *App {
 	log.Printf("db configured for %s:%d/%s", cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)
 	log.Printf("s3 configured for %s bucket=%s", cfg.S3.Endpoint, cfg.S3.Bucket)
 
-	return &App{cfg: cfg, router: mux}
+	return &App{cfg: cfg, router: mux, db: db}, nil
 }
 
 func (a *App) Router() http.Handler {
 	return a.router
+}
+
+func (a *App) Close() error {
+	if a.db == nil {
+		return nil
+	}
+	return a.db.Close()
 }
