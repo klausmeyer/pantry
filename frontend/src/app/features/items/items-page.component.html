@@ -29,10 +29,12 @@
         {{ bestBeforeLabel(item.bestBefore) }}
       </div>
       <h2 class="card-title">{{ item.name }}</h2>
-      <div class="badge badge-secondary badge-outline self-start font-mono">
-        {{ item.contentAmount }} {{ item.contentUnit }}
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="badge badge-secondary badge-outline font-mono">
+          {{ item.contentAmount }} {{ item.contentUnit }}
+        </div>
+        <div class="badge badge-accent badge-outline">{{ item.packaging }}</div>
       </div>
-      <div class="badge badge-accent badge-outline self-start">{{ item.packaging }}</div>
       <p>Best before: {{ item.bestBefore }}</p>
       <p *ngIf="item.comment">{{ item.comment }}</p>
     </div>
