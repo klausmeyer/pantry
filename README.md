@@ -10,6 +10,8 @@ Pantry helps you track household food supplies with a JSON:API backend and an An
   See [`backend/README.md`](backend/README.md)
 - `frontend/` - Angular UI (Tailwind + DaisyUI)  
   See [`frontend/README.md`](frontend/README.md)
+- `misc/helm/pantry/` - Helm chart for Kubernetes deployments  
+  See [`misc/helm/pantry/README.md`](misc/helm/pantry/README.md)
 - `misc/` - helper scripts (for example CSV import tooling)
 
 ## Quick Start
@@ -43,6 +45,11 @@ docker compose down
 ```
 
 The frontend container proxies `/api/*` and `/healthz` to the backend container.
+
+## Kubernetes Deployment
+
+For Kubernetes installs, use the Helm chart in [`misc/helm/pantry`](misc/helm/pantry).
+Chart usage and configuration are documented in [`misc/helm/pantry/README.md`](misc/helm/pantry/README.md).
 
 ## Development Notes
 
