@@ -1,21 +1,48 @@
+<section class="pointer-events-none fixed right-4 top-4 z-40">
+  <div class="pointer-events-auto flex items-center gap-2 rounded-box bg-base-200/85 p-2 shadow-lg backdrop-blur">
+    <button
+      class="btn btn-sm btn-circle"
+      type="button"
+      [class.btn-primary]="locale === 'en'"
+      [class.btn-ghost]="locale !== 'en'"
+      (click)="setLocale('en')"
+      [attr.aria-label]="localeLabel('en')"
+      title="English"
+    >
+      🇬🇧
+    </button>
+    <button
+      class="btn btn-sm btn-circle"
+      type="button"
+      [class.btn-primary]="locale === 'de'"
+      [class.btn-ghost]="locale !== 'de'"
+      (click)="setLocale('de')"
+      [attr.aria-label]="localeLabel('de')"
+      title="Deutsch"
+    >
+      🇩🇪
+    </button>
+  </div>
+</section>
+
 <section class="mb-4 flex flex-wrap items-end gap-3">
   <div class="form-control w-auto self-end">
     <div class="label py-1">
       <span class="label-text invisible">Action</span>
     </div>
-    <button class="btn btn-primary btn-sm" type="button" (click)="openCreateModal()">Add item</button>
+    <button class="btn btn-primary btn-sm" type="button" (click)="openCreateModal()">{{ t('addItem') }}</button>
   </div>
 
   <div class="ml-auto flex flex-wrap items-end gap-3">
     <label class="form-control w-60">
       <div class="label py-1">
-        <span class="label-text">Sort by</span>
+        <span class="label-text">{{ t('sortBy') }}</span>
       </div>
       <select class="select select-bordered select-sm" [value]="sortBy" (change)="onSortByChange($any($event.target).value)">
-        <option value="name">Name</option>
-        <option value="best_before">Best before</option>
-        <option value="created_at">Created at</option>
-        <option value="updated_at">Updated at</option>
+        <option value="name">{{ t('sortName') }}</option>
+        <option value="best_before">{{ t('sortBestBefore') }}</option>
+        <option value="created_at">{{ t('sortCreatedAt') }}</option>
+        <option value="updated_at">{{ t('sortUpdatedAt') }}</option>
       </select>
     </label>
     <div class="form-control w-auto self-end">
@@ -23,7 +50,7 @@
         <span class="label-text invisible">Order</span>
       </div>
       <button class="btn btn-sm btn-outline" type="button" (click)="toggleSortOrder()">
-        Order: {{ sortOrder === 'asc' ? 'ASC' : 'DESC' }}
+        {{ t('order') }}: {{ sortOrder === 'asc' ? 'ASC' : 'DESC' }}
       </button>
     </div>
   </div>
@@ -31,20 +58,20 @@
 
 <div class="modal" [class.modal-open]="showCreateModal">
   <div class="modal-box max-w-3xl">
-    <h2 class="card-title mb-3">Add Item</h2>
+    <h2 class="card-title mb-3">{{ t('addItemTitle') }}</h2>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Name</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('name') }}</span></div>
         <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.name" name="name" />
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Best before</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('bestBefore') }}</span></div>
         <input class="input input-bordered input-sm" type="date" [(ngModel)]="newItem.bestBefore" name="bestBefore" />
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Content amount</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('contentAmount') }}</span></div>
         <input
           class="input input-bordered input-sm"
           type="number"
@@ -56,33 +83,33 @@
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Content unit</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('contentUnit') }}</span></div>
         <select class="select select-bordered select-sm" [(ngModel)]="newItem.contentUnit" name="contentUnit">
-          <option value="grams">grams</option>
-          <option value="ml">ml</option>
-          <option value="l">l</option>
+          <option value="grams">{{ contentUnitLabel('grams') }}</option>
+          <option value="ml">{{ contentUnitLabel('ml') }}</option>
+          <option value="l">{{ contentUnitLabel('l') }}</option>
         </select>
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Packaging</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
         <select class="select select-bordered select-sm" [(ngModel)]="newItem.packaging" name="packaging">
-          <option value="can">can</option>
-          <option value="box">box</option>
-          <option value="bag">bag</option>
-          <option value="jar">jar</option>
-          <option value="other">other</option>
+          <option value="can">{{ packagingLabel('can') }}</option>
+          <option value="box">{{ packagingLabel('box') }}</option>
+          <option value="bag">{{ packagingLabel('bag') }}</option>
+          <option value="jar">{{ packagingLabel('jar') }}</option>
+          <option value="other">{{ packagingLabel('other') }}</option>
         </select>
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Picture key</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
         <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.pictureKey" name="pictureKey" />
       </label>
     </div>
 
     <label class="form-control mt-2">
-      <div class="label py-1"><span class="label-text">Comment (optional)</span></div>
+      <div class="label py-1"><span class="label-text">{{ t('commentOptional') }}</span></div>
       <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
     </label>
 
@@ -92,10 +119,10 @@
 
     <div class="modal-action">
       <button class="btn btn-ghost btn-sm" type="button" [disabled]="createLoading" (click)="closeCreateModal()">
-        Cancel
+        {{ t('cancel') }}
       </button>
       <button class="btn btn-primary btn-sm" type="button" [disabled]="createLoading" (click)="createItem()">
-        {{ createLoading ? 'Creating...' : 'Add item' }}
+        {{ createLoading ? t('creating') : t('addItem') }}
       </button>
     </div>
   </div>
@@ -105,7 +132,7 @@
 </div>
 
 <section class="alert mb-4 shadow-lg" *ngIf="loading">
-  <span>Loading items...</span>
+  <span>{{ t('loadingItems') }}</span>
 </section>
 <section class="alert alert-error mb-4 shadow-lg" *ngIf="!loading && error">
   <span>{{ error }}</span>
@@ -122,7 +149,7 @@
             [disabled]="deletingIds.has(item.id)"
             (click)="openEditModal(item)"
             [attr.aria-label]="'Edit ' + item.name"
-            title="Edit"
+            [attr.title]="t('edit')"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -143,7 +170,7 @@
             [disabled]="deletingIds.has(item.id)"
             (click)="deleteItem(item.id)"
             [attr.aria-label]="'Delete ' + item.name"
-            title="Delete"
+            [attr.title]="t('delete')"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -169,39 +196,39 @@
       <h2 class="card-title">{{ item.name }}</h2>
       <div class="flex flex-wrap items-center gap-2">
         <div class="badge badge-secondary badge-outline font-mono">
-          {{ item.contentAmount }} {{ item.contentUnit }}
+          {{ item.contentAmount }} {{ contentUnitLabel(item.contentUnit) }}
         </div>
-        <div class="badge badge-accent badge-outline">{{ item.packaging }}</div>
+        <div class="badge badge-accent badge-outline">{{ packagingLabel(item.packaging) }}</div>
       </div>
-      <p>Best before: {{ item.bestBefore }}</p>
+      <p>{{ t('bestBefore') }}: {{ item.bestBefore }}</p>
       <p *ngIf="item.comment">{{ item.comment }}</p>
     </div>
   </article>
 
   <article class="card border border-dashed border-base-content/30 bg-base-200" *ngIf="items.length === 0">
     <div class="card-body">
-      <h2 class="card-title">No items yet</h2>
-      <p>Create your first item through the API and refresh.</p>
+      <h2 class="card-title">{{ t('noItemsYet') }}</h2>
+      <p>{{ t('createFirstItem') }}</p>
     </div>
   </article>
 </section>
 
 <div class="modal" [class.modal-open]="showEditModal">
   <div class="modal-box max-w-3xl">
-    <h2 class="card-title mb-3">Edit Item</h2>
+    <h2 class="card-title mb-3">{{ t('editItemTitle') }}</h2>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Name</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('name') }}</span></div>
         <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.name" name="editName" />
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Best before</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('bestBefore') }}</span></div>
         <input class="input input-bordered input-sm" type="date" [(ngModel)]="editItem.bestBefore" name="editBestBefore" />
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Content amount</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('contentAmount') }}</span></div>
         <input
           class="input input-bordered input-sm"
           type="number"
@@ -213,33 +240,33 @@
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Content unit</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('contentUnit') }}</span></div>
         <select class="select select-bordered select-sm" [(ngModel)]="editItem.contentUnit" name="editContentUnit">
-          <option value="grams">grams</option>
-          <option value="ml">ml</option>
-          <option value="l">l</option>
+          <option value="grams">{{ contentUnitLabel('grams') }}</option>
+          <option value="ml">{{ contentUnitLabel('ml') }}</option>
+          <option value="l">{{ contentUnitLabel('l') }}</option>
         </select>
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Packaging</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
         <select class="select select-bordered select-sm" [(ngModel)]="editItem.packaging" name="editPackaging">
-          <option value="can">can</option>
-          <option value="box">box</option>
-          <option value="bag">bag</option>
-          <option value="jar">jar</option>
-          <option value="other">other</option>
+          <option value="can">{{ packagingLabel('can') }}</option>
+          <option value="box">{{ packagingLabel('box') }}</option>
+          <option value="bag">{{ packagingLabel('bag') }}</option>
+          <option value="jar">{{ packagingLabel('jar') }}</option>
+          <option value="other">{{ packagingLabel('other') }}</option>
         </select>
       </label>
 
       <label class="form-control">
-        <div class="label py-1"><span class="label-text">Picture key</span></div>
+        <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
         <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.pictureKey" name="editPictureKey" />
       </label>
     </div>
 
     <label class="form-control mt-2">
-      <div class="label py-1"><span class="label-text">Comment (optional)</span></div>
+      <div class="label py-1"><span class="label-text">{{ t('commentOptional') }}</span></div>
       <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.comment" name="editComment" />
     </label>
 
@@ -249,10 +276,10 @@
 
     <div class="modal-action">
       <button class="btn btn-ghost btn-sm" type="button" [disabled]="editLoading" (click)="closeEditModal()">
-        Cancel
+        {{ t('cancel') }}
       </button>
       <button class="btn btn-primary btn-sm" type="button" [disabled]="editLoading" (click)="updateItem()">
-        {{ editLoading ? 'Saving...' : 'Save changes' }}
+        {{ editLoading ? t('saving') : t('saveChanges') }}
       </button>
     </div>
   </div>
