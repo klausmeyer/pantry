@@ -44,7 +44,7 @@ func New(cfg config.Config) (*App, error) {
 	log.Printf("db configured for %s:%d/%s", cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)
 	log.Printf("s3 configured for %s bucket=%s", cfg.S3.Endpoint, cfg.S3.Bucket)
 
-	return &App{cfg: cfg, router: mux, db: db}, nil
+	return &App{cfg: cfg, router: withCORS(mux), db: db}, nil
 }
 
 func (a *App) Router() http.Handler {
@@ -56,4 +56,20 @@ func (a *App) Close() error {
 		return nil
 	}
 	return a.db.Close()
+}
+
+func withCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type")
+		w.Header().Set("Vary", "Origin, Access-Control-Request-Method, Access-Control-Request-Headers")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
