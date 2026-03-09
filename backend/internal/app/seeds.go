@@ -40,6 +40,7 @@ func seedDevelopmentItems(ctx context.Context, svc *service.ItemService, count i
 			BestBefore:    bestBefore,
 			ContentAmount: float64(100 + (i % 20 * 25)),
 			ContentUnit:   units[i%len(units)],
+			Packaging:     seedPackaging(i),
 			PictureKey:    fmt.Sprintf("items/seed-%03d.png", i+1),
 			Comment:       comment,
 		}); err != nil {
@@ -75,4 +76,15 @@ func seedNames(count int) []string {
 	}
 
 	return names
+}
+
+func seedPackaging(index int) item.Packaging {
+	packaging := []item.Packaging{
+		item.PackagingCan,
+		item.PackagingBox,
+		item.PackagingBag,
+		item.PackagingJar,
+		item.PackagingOther,
+	}
+	return packaging[index%len(packaging)]
 }

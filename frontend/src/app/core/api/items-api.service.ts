@@ -34,6 +34,7 @@ export class ItemsApiService {
       bestBefore: resource.attributes.best_before,
       contentAmount: resource.attributes.content_amount,
       contentUnit: resource.attributes.content_unit,
+      packaging: resource.attributes.packaging,
       pictureKey: resource.attributes.picture_key,
       comment: resource.attributes.comment,
       createdAt: resource.attributes.created_at,

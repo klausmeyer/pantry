@@ -64,6 +64,7 @@ paths:
                           best_before: '2026-12-31'
                           content_amount: 500
                           content_unit: grams
+                          packaging: bag
                           picture_key: items/rice.png
                           comment: Basmati
                           created_at: '2026-03-09T20:51:00Z'
@@ -75,6 +76,7 @@ paths:
                           best_before: '2026-03-14'
                           content_amount: 1
                           content_unit: l
+                          packaging: box
                           picture_key: items/milk.png
                           comment: null
                           created_at: '2026-03-09T20:52:00Z'
@@ -122,6 +124,7 @@ paths:
                       best_before: '2026-12-31'
                       content_amount: 500
                       content_unit: grams
+                      packaging: bag
                       picture_key: items/rice.png
                       comment: Basmati
       responses:
@@ -140,6 +143,7 @@ paths:
                     best_before: '2026-12-31'
                     content_amount: 500
                     content_unit: grams
+                    packaging: bag
                     picture_key: items/rice.png
                     comment: Basmati
                     created_at: '2026-03-09T20:55:00Z'
@@ -216,6 +220,7 @@ components:
           best_before: '2026-12-31'
           content_amount: 500
           content_unit: grams
+          packaging: bag
           picture_key: items/rice.png
           comment: Basmati
           created_at: '2026-03-09T20:51:00Z'
@@ -240,6 +245,7 @@ components:
         best_before: '2026-12-31'
         content_amount: 500
         content_unit: grams
+        packaging: bag
         picture_key: items/rice.png
         comment: Basmati
         created_at: '2026-03-09T20:51:00Z'
@@ -256,6 +262,9 @@ components:
         content_unit:
           type: string
           enum: [grams, ml, l]
+        packaging:
+          type: string
+          enum: [can, box, bag, jar, other]
         picture_key:
           type: string
         comment:
@@ -273,6 +282,7 @@ components:
         - best_before
         - content_amount
         - content_unit
+        - packaging
         - picture_key
         - created_at
         - updated_at
@@ -289,6 +299,7 @@ components:
               best_before: '2026-12-31'
               content_amount: 500
               content_unit: grams
+              packaging: bag
               picture_key: items/rice.png
               comment: Basmati
               created_at: '2026-03-09T20:51:00Z'
@@ -312,6 +323,7 @@ components:
             best_before: '2026-12-31'
             content_amount: 500
             content_unit: grams
+            packaging: bag
             picture_key: items/rice.png
             comment: Basmati
             created_at: '2026-03-09T20:55:00Z'
@@ -332,6 +344,7 @@ components:
             best_before: '2026-12-31'
             content_amount: 500
             content_unit: grams
+            packaging: bag
             picture_key: items/rice.png
             comment: Basmati
       properties:
@@ -349,6 +362,7 @@ components:
           best_before: '2026-12-31'
           content_amount: 500
           content_unit: grams
+          packaging: bag
           picture_key: items/rice.png
           comment: Basmati
       properties:
@@ -367,6 +381,7 @@ components:
         best_before: '2026-12-31'
         content_amount: 500
         content_unit: grams
+        packaging: bag
         picture_key: items/rice.png
         comment: Basmati
       properties:
@@ -382,6 +397,9 @@ components:
         content_unit:
           type: string
           enum: [grams, ml, l]
+        packaging:
+          type: string
+          enum: [can, box, bag, jar, other]
         picture_key:
           type: string
         comment:
@@ -393,6 +411,7 @@ components:
         - best_before
         - content_amount
         - content_unit
+        - packaging
         - picture_key
 
     ErrorDocument:

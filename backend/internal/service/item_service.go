@@ -21,6 +21,7 @@ type CreateItemInput struct {
 	BestBefore    time.Time
 	ContentAmount float64
 	ContentUnit   item.Unit
+	Packaging     item.Packaging
 	PictureKey    string
 	Comment       *string
 }
@@ -43,6 +44,11 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 	if input.ContentUnit == "" {
 		return item.Item{}, errors.New("content_unit is required")
 	}
+	switch input.Packaging {
+	case item.PackagingCan, item.PackagingBox, item.PackagingBag, item.PackagingJar, item.PackagingOther:
+	default:
+		return item.Item{}, errors.New("packaging must be one of can, box, bag, jar, other")
+	}
 
 	now := time.Now().UTC()
 	created := item.Item{
@@ -51,6 +57,7 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 		BestBefore:    input.BestBefore,
 		ContentAmount: input.ContentAmount,
 		ContentUnit:   input.ContentUnit,
+		Packaging:     input.Packaging,
 		PictureKey:    strings.TrimSpace(input.PictureKey),
 		Comment:       input.Comment,
 		CreatedAt:     now,

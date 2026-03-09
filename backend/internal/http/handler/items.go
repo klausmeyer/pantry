@@ -32,6 +32,7 @@ type itemAttributes struct {
 	BestBefore    string  `json:"best_before"`
 	ContentAmount float64 `json:"content_amount"`
 	ContentUnit   string  `json:"content_unit"`
+	Packaging     string  `json:"packaging"`
 	PictureKey    string  `json:"picture_key"`
 	Comment       *string `json:"comment,omitempty"`
 	CreatedAt     string  `json:"created_at"`
@@ -45,12 +46,13 @@ type itemResource struct {
 }
 
 type createItemAttributes struct {
-	Name          string    `json:"name"`
-	BestBefore    string    `json:"best_before"`
-	ContentAmount float64   `json:"content_amount"`
-	ContentUnit   item.Unit `json:"content_unit"`
-	PictureKey    string    `json:"picture_key"`
-	Comment       *string   `json:"comment"`
+	Name          string         `json:"name"`
+	BestBefore    string         `json:"best_before"`
+	ContentAmount float64        `json:"content_amount"`
+	ContentUnit   item.Unit      `json:"content_unit"`
+	Packaging     item.Packaging `json:"packaging"`
+	PictureKey    string         `json:"picture_key"`
+	Comment       *string        `json:"comment"`
 }
 
 type createItemDocument struct {
@@ -69,6 +71,7 @@ func toItemResource(i item.Item) itemResource {
 			BestBefore:    i.BestBefore.UTC().Format(time.DateOnly),
 			ContentAmount: i.ContentAmount,
 			ContentUnit:   string(i.ContentUnit),
+			Packaging:     string(i.Packaging),
 			PictureKey:    i.PictureKey,
 			Comment:       i.Comment,
 			CreatedAt:     i.CreatedAt.UTC().Format(time.RFC3339),
@@ -172,6 +175,7 @@ func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		BestBefore:    bestBefore,
 		ContentAmount: req.Data.Attributes.ContentAmount,
 		ContentUnit:   req.Data.Attributes.ContentUnit,
+		Packaging:     req.Data.Attributes.Packaging,
 		PictureKey:    req.Data.Attributes.PictureKey,
 		Comment:       req.Data.Attributes.Comment,
 	})

@@ -1,4 +1,5 @@
 export type ContentUnit = 'grams' | 'ml' | 'l';
+export type Packaging = 'can' | 'box' | 'bag' | 'jar' | 'other';
 
 export interface Item {
   id: string;
@@ -6,6 +7,7 @@ export interface Item {
   bestBefore: string;
   contentAmount: number;
   contentUnit: ContentUnit;
+  packaging: Packaging;
   pictureKey: string;
   comment?: string;
   createdAt: string;
@@ -17,6 +19,7 @@ export interface JsonApiItemAttributes {
   best_before: string;
   content_amount: number;
   content_unit: ContentUnit;
+  packaging: Packaging;
   picture_key: string;
   comment?: string;
   created_at: string;

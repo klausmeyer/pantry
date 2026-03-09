@@ -18,11 +18,17 @@ CREATE TABLE IF NOT EXISTS items (
   best_before DATE NOT NULL,
   content_amount DOUBLE PRECISION NOT NULL,
   content_unit TEXT NOT NULL,
+  packaging TEXT NOT NULL DEFAULT 'other',
   picture_key TEXT NOT NULL,
   comment TEXT,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL
 );
+`
+
+const ensurePackagingColumnSQL = `
+ALTER TABLE items
+ADD COLUMN IF NOT EXISTS packaging TEXT NOT NULL DEFAULT 'other';
 `
 
 type ItemRepository struct {
@@ -43,14 +49,17 @@ func (r *ItemRepository) ensureSchema(ctx context.Context) error {
 	if _, err := r.db.ExecContext(ctx, createItemsTableSQL); err != nil {
 		return fmt.Errorf("ensure items table: %w", err)
 	}
+	if _, err := r.db.ExecContext(ctx, ensurePackagingColumnSQL); err != nil {
+		return fmt.Errorf("ensure packaging column: %w", err)
+	}
 	return nil
 }
 
 func (r *ItemRepository) Create(ctx context.Context, i item.Item) (item.Item, error) {
 	const query = `
 INSERT INTO items (
-  id, name, best_before, content_amount, content_unit, picture_key, comment, created_at, updated_at
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+  id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 `
 
 	if _, err := r.db.ExecContext(
@@ -61,6 +70,7 @@ INSERT INTO items (
 		i.BestBefore,
 		i.ContentAmount,
 		i.ContentUnit,
+		i.Packaging,
 		i.PictureKey,
 		i.Comment,
 		i.CreatedAt,
@@ -95,7 +105,7 @@ func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInp
 	}
 
 	query := fmt.Sprintf(`
-SELECT id, name, best_before, content_amount, content_unit, picture_key, comment, created_at, updated_at
+SELECT id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
 FROM items
 ORDER BY %s;
 `, strings.Join(orderBy, ", "))
@@ -120,6 +130,7 @@ ORDER BY %s;
 			&i.BestBefore,
 			&i.ContentAmount,
 			&contentUnit,
+			&i.Packaging,
 			&i.PictureKey,
 			&comment,
 			&i.CreatedAt,

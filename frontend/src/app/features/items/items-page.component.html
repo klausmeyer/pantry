@@ -46,6 +46,7 @@
       <div class="badge badge-secondary badge-outline self-start font-mono">
         {{ item.contentAmount }} {{ item.contentUnit }}
       </div>
+      <div class="badge badge-accent badge-outline self-start">{{ item.packaging }}</div>
       <p>Best before: {{ item.bestBefore }}</p>
       <p *ngIf="item.comment">{{ item.comment }}</p>
     </div>

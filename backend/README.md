@@ -56,6 +56,7 @@ curl -X POST http://localhost:4000/api/items \
         "best_before": "2026-12-31",
         "content_amount": 500,
         "content_unit": "grams",
+        "packaging": "bag",
         "picture_key": "items/rice.png",
         "comment": "Basmatireis"
       }
@@ -73,6 +74,8 @@ curl -X POST http://localhost:4000/api/items \
     - default is `sort=id` (ascending)
 - `POST /api/items` returns:
   - `{ "data": { "type": "items", "id": "...", "attributes": { ... } } }`
+- `packaging` is required and must be one of:
+  - `can | box | bag | jar | other`
 - Validation and parsing failures return JSON:API error documents:
   - `{ "errors": [ { "status": "400", "title": "...", "detail": "..." } ] }`
 

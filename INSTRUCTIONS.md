@@ -22,6 +22,7 @@ The application consists of:
 
 - The main model will be representing an pantry item with the following attributes:
   - Name
+  - Packaging (e.g. `can`, `box`, `bag`, `jar`, `other`)
   - Best before date
   - Content amount
   - Content unit (e.g. `grams`, `ml`, etc. - use metric system)
