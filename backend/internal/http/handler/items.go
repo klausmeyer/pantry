@@ -16,8 +16,7 @@ import (
 const itemType = "items"
 
 var (
-	errInvalidSortBy    = errors.New("sort_by must be one of id, name, best_before, created_at, updated_at")
-	errInvalidSortOrder = errors.New("sort_order must be one of asc, desc")
+	errInvalidSort = errors.New("sort must use fields id, name, best_before, created_at, updated_at (prefix with '-' for desc)")
 )
 
 type ItemsHandler struct {
@@ -100,43 +99,49 @@ func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
-	sortByRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort_by")))
-	sortOrderRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort_order")))
-
-	input := service.ListItemsInput{
-		SortBy:    repository.ItemSortByID,
-		SortOrder: repository.SortOrderAsc,
+	sortRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort")))
+	if sortRaw == "" {
+		return service.ListItemsInput{
+			Sort: []repository.SortField{
+				{By: repository.ItemSortByID, Order: repository.SortOrderAsc},
+			},
+		}, nil
 	}
 
-	if sortByRaw != "" {
-		switch sortByRaw {
+	parts := strings.Split(sortRaw, ",")
+	sort := make([]repository.SortField, 0, len(parts))
+	for _, part := range parts {
+		token := strings.TrimSpace(part)
+		if token == "" {
+			return service.ListItemsInput{}, errInvalidSort
+		}
+
+		order := repository.SortOrderAsc
+		if strings.HasPrefix(token, "-") {
+			order = repository.SortOrderDesc
+			token = strings.TrimPrefix(token, "-")
+		}
+
+		var by repository.ItemSortBy
+		switch token {
 		case "id":
-			input.SortBy = repository.ItemSortByID
+			by = repository.ItemSortByID
 		case "name":
-			input.SortBy = repository.ItemSortByName
+			by = repository.ItemSortByName
 		case "best_before", "best-before":
-			input.SortBy = repository.ItemSortByBestBefore
+			by = repository.ItemSortByBestBefore
 		case "created_at", "created-at":
-			input.SortBy = repository.ItemSortByCreatedAt
+			by = repository.ItemSortByCreatedAt
 		case "updated_at", "updated-at":
-			input.SortBy = repository.ItemSortByUpdatedAt
+			by = repository.ItemSortByUpdatedAt
 		default:
-			return service.ListItemsInput{}, errInvalidSortBy
+			return service.ListItemsInput{}, errInvalidSort
 		}
+
+		sort = append(sort, repository.SortField{By: by, Order: order})
 	}
 
-	if sortOrderRaw != "" {
-		switch sortOrderRaw {
-		case "asc":
-			input.SortOrder = repository.SortOrderAsc
-		case "desc":
-			input.SortOrder = repository.SortOrderDesc
-		default:
-			return service.ListItemsInput{}, errInvalidSortOrder
-		}
-	}
-
-	return input, nil
+	return service.ListItemsInput{Sort: sort}, nil
 }
 
 func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {

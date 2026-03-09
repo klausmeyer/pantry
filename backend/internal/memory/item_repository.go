@@ -34,27 +34,36 @@ func (r *ItemRepository) List(_ context.Context, input repository.ListItemsInput
 	copy(itemsCopy, r.items)
 
 	slices.SortFunc(itemsCopy, func(a, b item.Item) int {
-		var cmp int
-		switch input.SortBy {
-		case repository.ItemSortByName:
-			cmp = compareString(a.Name, b.Name)
-		case repository.ItemSortByBestBefore:
-			cmp = compareTime(a.BestBefore, b.BestBefore)
-		case repository.ItemSortByCreatedAt:
-			cmp = compareTime(a.CreatedAt, b.CreatedAt)
-		case repository.ItemSortByUpdatedAt:
-			cmp = compareTime(a.UpdatedAt, b.UpdatedAt)
-		default:
-			cmp = compareString(a.ID, b.ID)
+		for _, sortField := range input.Sort {
+			cmp := compareBySortField(a, b, sortField.By)
+			if cmp == 0 {
+				continue
+			}
+			if sortField.Order == repository.SortOrderDesc {
+				return -cmp
+			}
+			return cmp
 		}
 
-		if input.SortOrder == repository.SortOrderDesc {
-			return -cmp
-		}
-		return cmp
+		return compareString(a.ID, b.ID)
 	})
 
 	return itemsCopy, nil
+}
+
+func compareBySortField(a, b item.Item, sortBy repository.ItemSortBy) int {
+	switch sortBy {
+	case repository.ItemSortByName:
+		return compareString(a.Name, b.Name)
+	case repository.ItemSortByBestBefore:
+		return compareTime(a.BestBefore, b.BestBefore)
+	case repository.ItemSortByCreatedAt:
+		return compareTime(a.CreatedAt, b.CreatedAt)
+	case repository.ItemSortByUpdatedAt:
+		return compareTime(a.UpdatedAt, b.UpdatedAt)
+	default:
+		return compareString(a.ID, b.ID)
+	}
 }
 
 func compareString(a, b string) int {

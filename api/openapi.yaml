@@ -36,21 +36,15 @@ paths:
       operationId: listItems
       parameters:
         - in: query
-          name: sort_by
+          name: sort
           required: false
-          description: Sort field. Defaults to `id`.
+          description: |
+            JSON:API sort expression. Comma-separated fields are supported.
+            Use `-` prefix for descending. Defaults to `id` (ascending).
+            Example: `sort=best_before,-name`
           schema:
             type: string
-            enum: [id, name, best_before, created_at, updated_at]
             default: id
-        - in: query
-          name: sort_order
-          required: false
-          description: Sort direction. Defaults to `asc`.
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: asc
       responses:
         '200':
           description: List of items
@@ -85,6 +79,17 @@ paths:
                           comment: null
                           created_at: '2026-03-09T20:52:00Z'
                           updated_at: '2026-03-09T20:52:00Z'
+        '400':
+          description: Invalid sort parameter
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '400'
+                    title: invalid sorting
+                    detail: sort must use fields id, name, best_before, created_at, updated_at (prefix with '-' for desc)
         '500':
           description: Internal error
           content:

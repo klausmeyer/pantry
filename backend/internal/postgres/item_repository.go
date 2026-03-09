@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
@@ -72,20 +73,32 @@ INSERT INTO items (
 }
 
 func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInput) ([]item.Item, error) {
-	sortColumn, ok := sortColumns[input.SortBy]
-	if !ok {
-		sortColumn = "id"
+	orderBy := make([]string, 0, len(input.Sort)+1)
+	for _, sortField := range input.Sort {
+		sortColumn, ok := sortColumns[sortField.By]
+		if !ok {
+			continue
+		}
+
+		sortOrder := "ASC"
+		if sortField.Order == repository.SortOrderDesc {
+			sortOrder = "DESC"
+		}
+
+		orderBy = append(orderBy, fmt.Sprintf("%s %s", sortColumn, sortOrder))
 	}
-	sortOrder := strings.ToUpper(string(input.SortOrder))
-	if sortOrder != "ASC" && sortOrder != "DESC" {
-		sortOrder = "ASC"
+	if len(orderBy) == 0 {
+		orderBy = append(orderBy, "id ASC")
+	}
+	if !slices.Contains(orderBy, "id ASC") && !slices.Contains(orderBy, "id DESC") {
+		orderBy = append(orderBy, "id ASC")
 	}
 
 	query := fmt.Sprintf(`
 SELECT id, name, best_before, content_amount, content_unit, picture_key, comment, created_at, updated_at
 FROM items
-ORDER BY %s %s;
-`, sortColumn, sortOrder)
+ORDER BY %s;
+`, strings.Join(orderBy, ", "))
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {

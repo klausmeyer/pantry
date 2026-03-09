@@ -24,8 +24,12 @@ const (
 )
 
 type ListItemsInput struct {
-	SortBy    ItemSortBy
-	SortOrder SortOrder
+	Sort []SortField
+}
+
+type SortField struct {
+	By    ItemSortBy
+	Order SortOrder
 }
 
 type ItemRepository interface {

@@ -15,12 +15,13 @@ export class ItemsApiService {
   private readonly baseUrl = 'http://localhost:4000';
 
   list(sortBy: ItemSortBy, sortOrder: SortOrder): Observable<Item[]> {
+    const sort = sortOrder === 'desc' ? `-${sortBy}` : sortBy;
+
     return this.http
       .get<JsonApiListResponse>(`${this.baseUrl}/api/items`, {
         headers: { Accept: 'application/vnd.api+json' },
         params: {
-          sort_by: sortBy,
-          sort_order: sortOrder
+          sort
         }
       })
       .pipe(map((response) => response.data.map((resource) => this.toItem(resource))));

@@ -26,8 +26,7 @@ type CreateItemInput struct {
 }
 
 type ListItemsInput struct {
-	SortBy    repository.ItemSortBy
-	SortOrder repository.SortOrder
+	Sort []repository.SortField
 }
 
 func NewItemService(repo repository.ItemRepository, ids *id.Generator) *ItemService {
@@ -62,26 +61,44 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 }
 
 func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {
-	sortBy := input.SortBy
-	switch sortBy {
-	case repository.ItemSortByID,
-		repository.ItemSortByName,
-		repository.ItemSortByBestBefore,
-		repository.ItemSortByCreatedAt,
-		repository.ItemSortByUpdatedAt:
-	default:
-		sortBy = repository.ItemSortByID
-	}
-
-	sortOrder := input.SortOrder
-	switch sortOrder {
-	case repository.SortOrderAsc, repository.SortOrderDesc:
-	default:
-		sortOrder = repository.SortOrderAsc
-	}
-
 	return s.repo.List(ctx, repository.ListItemsInput{
-		SortBy:    sortBy,
-		SortOrder: sortOrder,
+		Sort: normalizeSort(input.Sort),
 	})
+}
+
+func normalizeSort(sort []repository.SortField) []repository.SortField {
+	if len(sort) == 0 {
+		return []repository.SortField{
+			{By: repository.ItemSortByID, Order: repository.SortOrderAsc},
+		}
+	}
+
+	normalized := make([]repository.SortField, 0, len(sort))
+	for _, field := range sort {
+		by := field.By
+		switch by {
+		case repository.ItemSortByID,
+			repository.ItemSortByName,
+			repository.ItemSortByBestBefore,
+			repository.ItemSortByCreatedAt,
+			repository.ItemSortByUpdatedAt:
+		default:
+			continue
+		}
+
+		order := field.Order
+		if order != repository.SortOrderAsc && order != repository.SortOrderDesc {
+			order = repository.SortOrderAsc
+		}
+
+		normalized = append(normalized, repository.SortField{By: by, Order: order})
+	}
+
+	if len(normalized) == 0 {
+		return []repository.SortField{
+			{By: repository.ItemSortByID, Order: repository.SortOrderAsc},
+		}
+	}
+
+	return normalized
 }

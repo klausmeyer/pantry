@@ -12,8 +12,9 @@ import (
 
 func seedDevelopmentItems(ctx context.Context, svc *service.ItemService, count int) error {
 	existing, err := svc.List(ctx, service.ListItemsInput{
-		SortBy:    repository.ItemSortByID,
-		SortOrder: repository.SortOrderAsc,
+		Sort: []repository.SortField{
+			{By: repository.ItemSortByID, Order: repository.SortOrderAsc},
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("list items before seeding: %w", err)

@@ -67,9 +67,10 @@ curl -X POST http://localhost:4000/api/items \
 
 - `GET /api/items` returns:
   - `{ "data": [ { "type": "items", "id": "...", "attributes": { ... } } ] }`
-  - Supports sorting with query params:
-    - `sort_by`: `id | name | best_before | created_at | updated_at` (default `id`)
-    - `sort_order`: `asc | desc` (default `asc`)
+  - Supports JSON:API sorting with query param:
+    - `sort`: `id | name | best_before | created_at | updated_at`
+    - prefix with `-` for descending (example: `sort=best_before,-name`)
+    - default is `sort=id` (ascending)
 - `POST /api/items` returns:
   - `{ "data": { "type": "items", "id": "...", "attributes": { ... } } }`
 - Validation and parsing failures return JSON:API error documents:
