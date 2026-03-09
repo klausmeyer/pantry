@@ -8,8 +8,7 @@ import { Item } from '../../core/models/item';
   selector: 'app-items-page',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './items-page.component.html',
-  styleUrl: './items-page.component.css'
+  templateUrl: './items-page.component.html'
 })
 export class ItemsPageComponent {
   private readonly api = inject(ItemsApiService);

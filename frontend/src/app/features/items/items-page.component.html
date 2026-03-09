@@ -1,22 +1,40 @@
-<section class="hero">
-  <p class="eyebrow">Pantry</p>
-  <h1>Track your shelf life before your shelf life tracks you.</h1>
-  <p class="lead">Angular frontend bootstrapped and connected to the JSON:API backend.</p>
+<section class="hero mb-8 rounded-box bg-base-200/70 shadow-xl">
+  <div class="hero-content py-10 text-left">
+    <div>
+      <p class="font-mono text-xs uppercase tracking-[0.09em] text-primary">Pantry</p>
+      <h1 class="my-2 max-w-[16ch] text-4xl font-bold leading-[1.02] md:text-6xl">
+        Track your shelf life before your shelf life tracks you.
+      </h1>
+      <p class="max-w-[60ch] text-base-content/80">
+        Angular frontend bootstrapped and connected to the JSON:API backend.
+      </p>
+    </div>
+  </div>
 </section>
 
-<section class="panel" *ngIf="loading">Loading items...</section>
-<section class="panel error" *ngIf="!loading && error">{{ error }}</section>
+<section class="alert mb-4 shadow-lg" *ngIf="loading">
+  <span>Loading items...</span>
+</section>
+<section class="alert alert-error mb-4 shadow-lg" *ngIf="!loading && error">
+  <span>{{ error }}</span>
+</section>
 
-<section class="grid" *ngIf="!loading && !error">
-  <article class="card" *ngFor="let item of items">
-    <p class="pill">{{ item.contentAmount }} {{ item.contentUnit }}</p>
-    <h2>{{ item.name }}</h2>
-    <p>Best before: {{ item.bestBefore }}</p>
-    <p *ngIf="item.comment">{{ item.comment }}</p>
+<section class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4" *ngIf="!loading && !error">
+  <article class="card bg-base-200 shadow-xl" *ngFor="let item of items">
+    <div class="card-body">
+      <div class="badge badge-secondary badge-outline font-mono">
+        {{ item.contentAmount }} {{ item.contentUnit }}
+      </div>
+      <h2 class="card-title">{{ item.name }}</h2>
+      <p>Best before: {{ item.bestBefore }}</p>
+      <p *ngIf="item.comment">{{ item.comment }}</p>
+    </div>
   </article>
 
-  <article class="card empty" *ngIf="items.length === 0">
-    <h2>No items yet</h2>
-    <p>Create your first item through the API and refresh.</p>
+  <article class="card border border-dashed border-base-content/30 bg-base-200" *ngIf="items.length === 0">
+    <div class="card-body">
+      <h2 class="card-title">No items yet</h2>
+      <p>Create your first item through the API and refresh.</p>
+    </div>
   </article>
 </section>
