@@ -152,7 +152,7 @@
       <div class="badge self-start" [class]="bestBeforeBadgeClass(item.bestBefore)">
         {{ bestBeforeLabel(item.bestBefore) }}
       </div>
-      <h2 class="card-title">{{ item.name }}</h2>
+      <h2 class="card-title block w-full truncate">{{ item.name }}</h2>
       <div class="flex flex-wrap items-center gap-2">
         <div class="badge badge-secondary badge-outline font-mono">
           {{ item.contentAmount }} {{ contentUnitLabel(item.contentUnit) }}
