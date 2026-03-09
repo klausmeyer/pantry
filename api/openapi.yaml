@@ -34,6 +34,23 @@ paths:
       tags: [Items]
       summary: List pantry items
       operationId: listItems
+      parameters:
+        - in: query
+          name: sort_by
+          required: false
+          description: Sort field. Defaults to `id`.
+          schema:
+            type: string
+            enum: [id, name, best_before, created_at, updated_at]
+            default: id
+        - in: query
+          name: sort_order
+          required: false
+          description: Sort direction. Defaults to `asc`.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
       responses:
         '200':
           description: List of items

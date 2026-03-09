@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
+	"github.com/klausmeyer/pantry/backend/internal/repository"
 )
 
 const createItemsTableSQL = `
@@ -69,12 +71,21 @@ INSERT INTO items (
 	return i, nil
 }
 
-func (r *ItemRepository) List(ctx context.Context) ([]item.Item, error) {
-	const query = `
+func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInput) ([]item.Item, error) {
+	sortColumn, ok := sortColumns[input.SortBy]
+	if !ok {
+		sortColumn = "id"
+	}
+	sortOrder := strings.ToUpper(string(input.SortOrder))
+	if sortOrder != "ASC" && sortOrder != "DESC" {
+		sortOrder = "ASC"
+	}
+
+	query := fmt.Sprintf(`
 SELECT id, name, best_before, content_amount, content_unit, picture_key, comment, created_at, updated_at
 FROM items
-ORDER BY created_at DESC;
-`
+ORDER BY %s %s;
+`, sortColumn, sortOrder)
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -117,4 +128,12 @@ ORDER BY created_at DESC;
 	}
 
 	return items, nil
+}
+
+var sortColumns = map[repository.ItemSortBy]string{
+	repository.ItemSortByID:         "id",
+	repository.ItemSortByName:       "name",
+	repository.ItemSortByBestBefore: "best_before",
+	repository.ItemSortByCreatedAt:  "created_at",
+	repository.ItemSortByUpdatedAt:  "updated_at",
 }

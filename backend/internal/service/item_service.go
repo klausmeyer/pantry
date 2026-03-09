@@ -25,6 +25,11 @@ type CreateItemInput struct {
 	Comment       *string
 }
 
+type ListItemsInput struct {
+	SortBy    repository.ItemSortBy
+	SortOrder repository.SortOrder
+}
+
 func NewItemService(repo repository.ItemRepository, ids *id.Generator) *ItemService {
 	return &ItemService{repo: repo, ids: ids}
 }
@@ -56,6 +61,27 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 	return s.repo.Create(ctx, created)
 }
 
-func (s *ItemService) List(ctx context.Context) ([]item.Item, error) {
-	return s.repo.List(ctx)
+func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {
+	sortBy := input.SortBy
+	switch sortBy {
+	case repository.ItemSortByID,
+		repository.ItemSortByName,
+		repository.ItemSortByBestBefore,
+		repository.ItemSortByCreatedAt,
+		repository.ItemSortByUpdatedAt:
+	default:
+		sortBy = repository.ItemSortByID
+	}
+
+	sortOrder := input.SortOrder
+	switch sortOrder {
+	case repository.SortOrderAsc, repository.SortOrderDesc:
+	default:
+		sortOrder = repository.SortOrderAsc
+	}
+
+	return s.repo.List(ctx, repository.ListItemsInput{
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
+	})
 }

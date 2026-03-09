@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
+	"github.com/klausmeyer/pantry/backend/internal/repository"
 	"github.com/klausmeyer/pantry/backend/internal/service"
 )
 
 func seedDevelopmentItems(ctx context.Context, svc *service.ItemService, count int) error {
-	existing, err := svc.List(ctx)
+	existing, err := svc.List(ctx, service.ListItemsInput{
+		SortBy:    repository.ItemSortByID,
+		SortOrder: repository.SortOrderAsc,
+	})
 	if err != nil {
 		return fmt.Errorf("list items before seeding: %w", err)
 	}

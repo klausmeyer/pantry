@@ -32,3 +32,6 @@ export interface JsonApiItemResource {
 export interface JsonApiListResponse {
   data: JsonApiItemResource[];
 }
+
+export type ItemSortBy = 'id' | 'name' | 'best_before' | 'created_at' | 'updated_at';
+export type SortOrder = 'asc' | 'desc';

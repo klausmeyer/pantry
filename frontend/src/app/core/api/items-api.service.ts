@@ -1,17 +1,27 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { Item, JsonApiItemResource, JsonApiListResponse } from '../models/item';
+import {
+  Item,
+  ItemSortBy,
+  JsonApiItemResource,
+  JsonApiListResponse,
+  SortOrder
+} from '../models/item';
 
 @Injectable({ providedIn: 'root' })
 export class ItemsApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = 'http://localhost:4000';
 
-  list(): Observable<Item[]> {
+  list(sortBy: ItemSortBy, sortOrder: SortOrder): Observable<Item[]> {
     return this.http
       .get<JsonApiListResponse>(`${this.baseUrl}/api/items`, {
-        headers: { Accept: 'application/vnd.api+json' }
+        headers: { Accept: 'application/vnd.api+json' },
+        params: {
+          sort_by: sortBy,
+          sort_order: sortOrder
+        }
       })
       .pipe(map((response) => response.data.map((resource) => this.toItem(resource))));
   }

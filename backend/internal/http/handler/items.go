@@ -2,15 +2,23 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
+	"github.com/klausmeyer/pantry/backend/internal/repository"
 	"github.com/klausmeyer/pantry/backend/internal/service"
 	"github.com/klausmeyer/pantry/backend/pkg/httputil"
 )
 
 const itemType = "items"
+
+var (
+	errInvalidSortBy    = errors.New("sort_by must be one of id, name, best_before, created_at, updated_at")
+	errInvalidSortOrder = errors.New("sort_order must be one of asc, desc")
+)
 
 type ItemsHandler struct {
 	service *service.ItemService
@@ -71,7 +79,13 @@ func toItemResource(i item.Item) itemResource {
 }
 
 func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
-	items, err := h.service.List(r.Context())
+	listInput, err := parseListItemsInput(r)
+	if err != nil {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid sorting", err.Error())
+		return
+	}
+
+	items, err := h.service.List(r.Context(), listInput)
 	if err != nil {
 		httputil.WriteJSONAPIError(w, http.StatusInternalServerError, "internal error", err.Error())
 		return
@@ -83,6 +97,46 @@ func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.WriteJSONAPI(w, http.StatusOK, map[string]any{"data": resources})
+}
+
+func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
+	sortByRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort_by")))
+	sortOrderRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort_order")))
+
+	input := service.ListItemsInput{
+		SortBy:    repository.ItemSortByID,
+		SortOrder: repository.SortOrderAsc,
+	}
+
+	if sortByRaw != "" {
+		switch sortByRaw {
+		case "id":
+			input.SortBy = repository.ItemSortByID
+		case "name":
+			input.SortBy = repository.ItemSortByName
+		case "best_before", "best-before":
+			input.SortBy = repository.ItemSortByBestBefore
+		case "created_at", "created-at":
+			input.SortBy = repository.ItemSortByCreatedAt
+		case "updated_at", "updated-at":
+			input.SortBy = repository.ItemSortByUpdatedAt
+		default:
+			return service.ListItemsInput{}, errInvalidSortBy
+		}
+	}
+
+	if sortOrderRaw != "" {
+		switch sortOrderRaw {
+		case "asc":
+			input.SortOrder = repository.SortOrderAsc
+		case "desc":
+			input.SortOrder = repository.SortOrderDesc
+		default:
+			return service.ListItemsInput{}, errInvalidSortOrder
+		}
+	}
+
+	return input, nil
 }
 
 func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {

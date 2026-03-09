@@ -12,6 +12,24 @@
   </div>
 </section>
 
+<section class="mb-4 flex flex-wrap items-center gap-3">
+  <label class="form-control w-60">
+    <div class="label py-1">
+      <span class="label-text">Sort by</span>
+    </div>
+    <select class="select select-bordered select-sm" [value]="sortBy" (change)="onSortByChange($any($event.target).value)">
+      <option value="id">ID</option>
+      <option value="name">Name</option>
+      <option value="best_before">Best before</option>
+      <option value="created_at">Created at</option>
+      <option value="updated_at">Updated at</option>
+    </select>
+  </label>
+  <button class="btn btn-sm btn-outline mt-6" type="button" (click)="toggleSortOrder()">
+    Order: {{ sortOrder === 'asc' ? 'ASC' : 'DESC' }}
+  </button>
+</section>
+
 <section class="alert mb-4 shadow-lg" *ngIf="loading">
   <span>Loading items...</span>
 </section>
