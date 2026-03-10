@@ -6,7 +6,7 @@ import { ItemsPageComponent } from './features/items/items-page.component';
   standalone: true,
   imports: [ItemsPageComponent],
   template: `
-    <div data-theme="dracula" class="min-h-screen">
+    <div data-theme="cupcake" class="min-h-screen">
       <main class="mx-auto w-[min(1100px,calc(100%-2rem))] py-12">
         <app-items-page></app-items-page>
       </main>
