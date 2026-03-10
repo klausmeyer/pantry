@@ -22,6 +22,7 @@ export class ItemsPageComponent {
   error = '';
   sortBy: ItemSortBy = 'best_before';
   sortOrder: SortOrder = 'asc';
+  searchTerm = '';
   deletingIds = new Set<string>();
   createLoading = false;
   createError = '';
@@ -53,6 +54,9 @@ export class ItemsPageComponent {
     en: {
       addItem: 'Add item',
       sortBy: 'Sort by',
+      search: 'Search',
+      searchPlaceholder: 'Search items',
+      clearSearch: 'Clear',
       sortName: 'Name',
       sortBestBefore: 'EXP',
       sortCreatedAt: 'Created at',
@@ -98,6 +102,9 @@ export class ItemsPageComponent {
     de: {
       addItem: 'Artikel hinzufügen',
       sortBy: 'Sortieren nach',
+      search: 'Suche',
+      searchPlaceholder: 'Artikel suchen',
+      clearSearch: 'Leeren',
       sortName: 'Name',
       sortBestBefore: 'MHD',
       sortCreatedAt: 'Erstellt am',
@@ -150,6 +157,19 @@ export class ItemsPageComponent {
 
   onSortByChange(sortBy: string): void {
     this.sortBy = sortBy as ItemSortBy;
+    this.loadItems();
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm = term;
+    this.loadItems();
+  }
+
+  clearSearch(): void {
+    if (!this.searchTerm) {
+      return;
+    }
+    this.searchTerm = '';
     this.loadItems();
   }
 
@@ -270,7 +290,7 @@ export class ItemsPageComponent {
     this.error = '';
 
     this.api
-      .list(this.sortBy, this.sortOrder)
+      .list(this.sortBy, this.sortOrder, this.searchTerm)
       .pipe(
         catchError((_err: unknown) => {
           this.error = this.t('failedLoad');

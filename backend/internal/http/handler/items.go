@@ -110,12 +110,14 @@ func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
+	search := strings.TrimSpace(r.URL.Query().Get("q"))
 	sortRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort")))
 	if sortRaw == "" {
 		return service.ListItemsInput{
 			Sort: []repository.SortField{
 				{By: repository.ItemSortByID, Order: repository.SortOrderAsc},
 			},
+			Search: search,
 		}, nil
 	}
 
@@ -152,7 +154,7 @@ func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
 		sort = append(sort, repository.SortField{By: by, Order: order})
 	}
 
-	return service.ListItemsInput{Sort: sort}, nil
+	return service.ListItemsInput{Sort: sort, Search: search}, nil
 }
 
 func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {

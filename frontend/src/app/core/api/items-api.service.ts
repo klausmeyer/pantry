@@ -15,15 +15,18 @@ export class ItemsApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = this.resolveBaseUrl();
 
-  list(sortBy: ItemSortBy, sortOrder: SortOrder): Observable<Item[]> {
+  list(sortBy: ItemSortBy, sortOrder: SortOrder, search?: string): Observable<Item[]> {
     const sort = sortOrder === 'desc' ? `-${sortBy}` : sortBy;
+    const trimmedSearch = search?.trim() ?? '';
+    const params: Record<string, string> = { sort };
+    if (trimmedSearch) {
+      params['q'] = trimmedSearch;
+    }
 
     return this.http
       .get<JsonApiListResponse>(`${this.baseUrl}/items`, {
         headers: { Accept: 'application/vnd.api+json' },
-        params: {
-          sort
-        }
+        params
       })
       .pipe(map((response) => response.data.map((resource) => this.toItem(resource))));
   }

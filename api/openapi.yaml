@@ -45,6 +45,14 @@ paths:
           schema:
             type: string
             default: id
+        - in: query
+          name: q
+          required: false
+          description: |
+            Case-insensitive search term matched against item name and comment.
+            Example: `q=rice`
+          schema:
+            type: string
       responses:
         '200':
           description: List of items

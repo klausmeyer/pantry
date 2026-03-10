@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -54,10 +55,18 @@ func (r *ItemRepository) List(_ context.Context, input repository.ListItemsInput
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	search := strings.TrimSpace(strings.ToLower(input.Search))
 	itemsCopy := make([]item.Item, 0, len(r.items))
 	for _, stored := range r.items {
 		if stored.DeletedAt != nil {
 			continue
+		}
+		if search != "" {
+			nameMatch := strings.Contains(strings.ToLower(stored.Name), search)
+			commentMatch := stored.Comment != nil && strings.Contains(strings.ToLower(*stored.Comment), search)
+			if !nameMatch && !commentMatch {
+				continue
+			}
 		}
 		itemsCopy = append(itemsCopy, stored)
 	}

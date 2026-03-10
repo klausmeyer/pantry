@@ -25,7 +25,8 @@ const (
 )
 
 type ListItemsInput struct {
-	Sort []SortField
+	Sort   []SortField
+	Search string
 }
 
 type SortField struct {

@@ -135,6 +135,13 @@ RETURNING created_at, updated_at;
 }
 
 func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInput) ([]item.Item, error) {
+	where := "deleted_at IS NULL"
+	args := []any{}
+	if strings.TrimSpace(input.Search) != "" {
+		where = "deleted_at IS NULL AND (name ILIKE $1 OR comment ILIKE $1)"
+		args = append(args, "%"+strings.TrimSpace(input.Search)+"%")
+	}
+
 	orderBy := make([]string, 0, len(input.Sort)+1)
 	for _, sortField := range input.Sort {
 		sortColumn, ok := sortColumns[sortField.By]
@@ -159,11 +166,11 @@ func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInp
 	query := fmt.Sprintf(`
 SELECT id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
 FROM items
-WHERE deleted_at IS NULL
+WHERE %s
 ORDER BY %s;
-`, strings.Join(orderBy, ", "))
+`, where, strings.Join(orderBy, ", "))
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list items: %w", err)
 	}

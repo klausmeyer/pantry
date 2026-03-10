@@ -27,7 +27,8 @@ type CreateItemInput struct {
 }
 
 type ListItemsInput struct {
-	Sort []repository.SortField
+	Sort   []repository.SortField
+	Search string
 }
 
 func NewItemService(repo repository.ItemRepository, ids *id.Generator) *ItemService {
@@ -100,7 +101,8 @@ func validateCreateOrUpdateInput(input CreateItemInput) error {
 
 func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {
 	return s.repo.List(ctx, repository.ListItemsInput{
-		Sort: normalizeSort(input.Sort),
+		Sort:   normalizeSort(input.Sort),
+		Search: strings.TrimSpace(input.Search),
 	})
 }
 
