@@ -328,9 +328,12 @@
         </select>
       </label>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
+      <div class="form-control">
+        <label class="label py-1" for="editPictureInput">
+          <span class="label-text">{{ t('pictureKey') }}</span>
+        </label>
         <input
+          id="editPictureInput"
           class="file-input file-input-bordered file-input-sm"
           type="file"
           accept="image/*"
@@ -345,14 +348,14 @@
         </span>
         <span class="text-xs opacity-70 mt-1" *ngIf="editItemPictureFile">{{ editItemPictureFile.name }}</span>
         <button
-          class="btn btn-xs btn-outline mt-2"
+          class="btn btn-xs btn-outline mt-2 self-start"
           type="button"
           *ngIf="editItem.pictureKey || editItemPictureFile"
           (click)="clearEditPicture(editPictureInput)"
         >
           {{ t('removePicture') }}
         </button>
-      </label>
+      </div>
     </div>
 
     <label class="form-control mt-2">
