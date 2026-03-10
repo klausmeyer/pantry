@@ -198,7 +198,14 @@ func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInp
 	where := "deleted_at IS NULL"
 	args := []any{}
 	if strings.TrimSpace(input.Search) != "" {
-		where = "deleted_at IS NULL AND (name ILIKE $1 OR comment ILIKE $1)"
+		normalizedSearch := normalizeSearchExpr("$1")
+		where = fmt.Sprintf(
+			"deleted_at IS NULL AND (%s LIKE %s OR %s LIKE %s)",
+			normalizeSearchExpr("name"),
+			normalizedSearch,
+			normalizeSearchExpr("comment"),
+			normalizedSearch,
+		)
 		args = append(args, "%"+strings.TrimSpace(input.Search)+"%")
 	}
 
@@ -276,6 +283,10 @@ ORDER BY %s;
 	}
 
 	return items, nil
+}
+
+func normalizeSearchExpr(expr string) string {
+	return fmt.Sprintf("replace(translate(lower(%s), 'äöü', 'aou'), 'ß', 'ss')", expr)
 }
 
 func (r *ItemRepository) SoftDelete(ctx context.Context, id string) error {

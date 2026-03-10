@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
 )
@@ -43,3 +44,18 @@ type ItemRepository interface {
 }
 
 var ErrNotFound = errors.New("item not found")
+
+func NormalizeSearchTerm(input string) string {
+	trimmed := strings.TrimSpace(input)
+	if trimmed == "" {
+		return ""
+	}
+	lower := strings.ToLower(trimmed)
+	replacer := strings.NewReplacer(
+		"ä", "a",
+		"ö", "o",
+		"ü", "u",
+		"ß", "ss",
+	)
+	return replacer.Replace(lower)
+}
