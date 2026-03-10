@@ -111,6 +111,93 @@ paths:
                   - status: '500'
                     title: internal error
                     detail: database unavailable
+
+    post:
+      tags: [Items]
+      summary: Create a pantry item
+      operationId: createItem
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/CreateItemDocument'
+            examples:
+              rice:
+                summary: Create rice item
+                value:
+                  data:
+                    type: items
+                    attributes:
+                      name: Rice
+                      best_before: '2026-12-31'
+                      content_amount: 500
+                      content_unit: grams
+                      packaging: bag
+                      picture_key: items/rice.png
+                      comment: Basmati
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ItemSingleDocument'
+              example:
+                data:
+                  type: items
+                  id: 019579e0-c3b5-7424-bf89-ae567634a2ff
+                  attributes:
+                    name: Rice
+                    best_before: '2026-12-31'
+                    content_amount: 500
+                    content_unit: grams
+                    packaging: bag
+                    picture_key: items/rice.png
+                    comment: Basmati
+                    created_at: '2026-03-09T20:55:00Z'
+                    updated_at: '2026-03-09T20:55:00Z'
+        '400':
+          description: Invalid request payload or validation error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              examples:
+                invalidDate:
+                  value:
+                    errors:
+                      - status: '400'
+                        title: invalid best_before
+                        detail: best_before must use YYYY-MM-DD
+                validation:
+                  value:
+                    errors:
+                      - status: '400'
+                        title: validation error
+                        detail: name is required
+        '409':
+          description: Invalid JSON:API resource type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '409'
+                    title: invalid type
+                    detail: data.type must be items
+        '415':
+          description: Unsupported media type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '415'
+                    title: unsupported media type
+                    detail: content-type must be application/vnd.api+json
   /api/uploads:
     post:
       tags: [Uploads]
@@ -220,92 +307,6 @@ paths:
                   - status: '500'
                     title: preview error
                     detail: could not create preview URL
-    post:
-      tags: [Items]
-      summary: Create a pantry item
-      operationId: createItem
-      requestBody:
-        required: true
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/CreateItemDocument'
-            examples:
-              rice:
-                summary: Create rice item
-                value:
-                  data:
-                    type: items
-                    attributes:
-                      name: Rice
-                      best_before: '2026-12-31'
-                      content_amount: 500
-                      content_unit: grams
-                      packaging: bag
-                      picture_key: items/rice.png
-                      comment: Basmati
-      responses:
-        '201':
-          description: Item created
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/ItemSingleDocument'
-              example:
-                data:
-                  type: items
-                  id: 019579e0-c3b5-7424-bf89-ae567634a2ff
-                  attributes:
-                    name: Rice
-                    best_before: '2026-12-31'
-                    content_amount: 500
-                    content_unit: grams
-                    packaging: bag
-                    picture_key: items/rice.png
-                    comment: Basmati
-                    created_at: '2026-03-09T20:55:00Z'
-                    updated_at: '2026-03-09T20:55:00Z'
-        '400':
-          description: Invalid request payload or validation error
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/ErrorDocument'
-              examples:
-                invalidDate:
-                  value:
-                    errors:
-                      - status: '400'
-                        title: invalid best_before
-                        detail: best_before must use YYYY-MM-DD
-                validation:
-                  value:
-                    errors:
-                      - status: '400'
-                        title: validation error
-                        detail: name is required
-        '409':
-          description: Invalid JSON:API resource type
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/ErrorDocument'
-              example:
-                errors:
-                  - status: '409'
-                    title: invalid type
-                    detail: data.type must be items
-        '415':
-          description: Unsupported media type
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/ErrorDocument'
-              example:
-                errors:
-                  - status: '415'
-                    title: unsupported media type
-                    detail: content-type must be application/vnd.api+json
   /api/items/{id}:
     patch:
       tags: [Items]
