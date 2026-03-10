@@ -14,6 +14,15 @@ import (
 )
 
 const createItemsTableSQL = `
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+CREATE OR REPLACE FUNCTION items_search_text() RETURNS trigger AS $$
+BEGIN
+  NEW.search_text := unaccent(lower(coalesce(NEW.name, '') || ' ' || coalesce(NEW.comment, '')));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE IF NOT EXISTS items (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -23,10 +32,16 @@ CREATE TABLE IF NOT EXISTS items (
   packaging TEXT NOT NULL DEFAULT 'other',
   picture_key TEXT,
   comment TEXT,
+  search_text TEXT,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,
   deleted_at TIMESTAMPTZ
 );
+
+CREATE TRIGGER items_search_text_trigger
+BEFORE INSERT OR UPDATE OF name, comment ON items
+FOR EACH ROW
+EXECUTE FUNCTION items_search_text();
 `
 
 const ensurePackagingColumnSQL = `
@@ -37,6 +52,30 @@ ADD COLUMN IF NOT EXISTS packaging TEXT NOT NULL DEFAULT 'other';
 const ensureDeletedAtColumnSQL = `
 ALTER TABLE items
 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+`
+
+const ensureUnaccentExtensionSQL = `
+CREATE EXTENSION IF NOT EXISTS unaccent;
+`
+
+const ensureSearchTextColumnSQL = `
+ALTER TABLE items
+ADD COLUMN IF NOT EXISTS search_text TEXT;
+`
+
+const ensureSearchTextTriggerSQL = `
+CREATE OR REPLACE FUNCTION items_search_text() RETURNS trigger AS $$
+BEGIN
+  NEW.search_text := unaccent(lower(coalesce(NEW.name, '') || ' ' || coalesce(NEW.comment, '')));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS items_search_text_trigger ON items;
+CREATE TRIGGER items_search_text_trigger
+BEFORE INSERT OR UPDATE OF name, comment ON items
+FOR EACH ROW
+EXECUTE FUNCTION items_search_text();
 `
 
 const allowNullPictureKeySQL = `
@@ -68,11 +107,20 @@ func (r *ItemRepository) ensureSchema(ctx context.Context) error {
 	if _, err := r.db.ExecContext(ctx, createItemsTableSQL); err != nil {
 		return fmt.Errorf("ensure items table: %w", err)
 	}
+	if _, err := r.db.ExecContext(ctx, ensureUnaccentExtensionSQL); err != nil {
+		return fmt.Errorf("ensure unaccent extension: %w", err)
+	}
 	if _, err := r.db.ExecContext(ctx, ensurePackagingColumnSQL); err != nil {
 		return fmt.Errorf("ensure packaging column: %w", err)
 	}
 	if _, err := r.db.ExecContext(ctx, ensureDeletedAtColumnSQL); err != nil {
 		return fmt.Errorf("ensure deleted_at column: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, ensureSearchTextColumnSQL); err != nil {
+		return fmt.Errorf("ensure search_text column: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, ensureSearchTextTriggerSQL); err != nil {
+		return fmt.Errorf("ensure search_text trigger: %w", err)
 	}
 	if _, err := r.db.ExecContext(ctx, allowNullPictureKeySQL); err != nil {
 		return fmt.Errorf("allow null picture_key: %w", err)
@@ -198,14 +246,7 @@ func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInp
 	where := "deleted_at IS NULL"
 	args := []any{}
 	if strings.TrimSpace(input.Search) != "" {
-		normalizedSearch := normalizeSearchExpr("$1")
-		where = fmt.Sprintf(
-			"deleted_at IS NULL AND (%s LIKE %s OR %s LIKE %s)",
-			normalizeSearchExpr("name"),
-			normalizedSearch,
-			normalizeSearchExpr("comment"),
-			normalizedSearch,
-		)
+		where = "deleted_at IS NULL AND search_text LIKE unaccent(lower($1))"
 		args = append(args, "%"+strings.TrimSpace(input.Search)+"%")
 	}
 
@@ -283,10 +324,6 @@ ORDER BY %s;
 	}
 
 	return items, nil
-}
-
-func normalizeSearchExpr(expr string) string {
-	return fmt.Sprintf("replace(translate(lower(%s), 'äöü', 'aou'), 'ß', 'ss')", expr)
 }
 
 func (r *ItemRepository) SoftDelete(ctx context.Context, id string) error {
