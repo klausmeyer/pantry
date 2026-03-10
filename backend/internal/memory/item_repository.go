@@ -51,6 +51,20 @@ func (r *ItemRepository) Update(_ context.Context, i item.Item) (item.Item, erro
 	return item.Item{}, repository.ErrNotFound
 }
 
+func (r *ItemRepository) GetByID(_ context.Context, id string) (item.Item, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, stored := range r.items {
+		if stored.ID != id || stored.DeletedAt != nil {
+			continue
+		}
+		return stored, nil
+	}
+
+	return item.Item{}, repository.ErrNotFound
+}
+
 func (r *ItemRepository) List(_ context.Context, input repository.ListItemsInput) ([]item.Item, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

@@ -12,6 +12,7 @@ import (
 )
 
 type S3Presigner struct {
+	client        *s3.Client
 	presignClient *s3.PresignClient
 	bucket        string
 }
@@ -42,6 +43,7 @@ func NewS3Presigner(ctx context.Context, cfg internalconfig.S3Config) (*S3Presig
 	})
 
 	return &S3Presigner{
+		client:        client,
 		presignClient: s3.NewPresignClient(client),
 		bucket:        cfg.Bucket,
 	}, nil
@@ -80,4 +82,12 @@ func (p *S3Presigner) PresignGet(ctx context.Context, key string, expires time.D
 	}
 
 	return presigned.URL, nil
+}
+
+func (p *S3Presigner) Delete(ctx context.Context, key string) error {
+	_, err := p.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(p.bucket),
+		Key:    aws.String(key),
+	})
+	return err
 }

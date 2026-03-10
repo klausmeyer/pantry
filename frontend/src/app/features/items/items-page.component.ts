@@ -97,6 +97,7 @@ export class ItemsPageComponent {
       previewLoading: 'Loading preview...',
       previewMissing: 'No picture uploaded yet.',
       previewFailed: 'Failed to load preview.',
+      removePicture: 'Remove picture',
       edit: 'Edit',
       delete: 'Delete',
       expiresToday: 'expires today',
@@ -150,6 +151,7 @@ export class ItemsPageComponent {
       previewLoading: 'Vorschau wird geladen...',
       previewMissing: 'Noch kein Bild hochgeladen.',
       previewFailed: 'Vorschau konnte nicht geladen werden.',
+      removePicture: 'Bild entfernen',
       edit: 'Bearbeiten',
       delete: 'Löschen',
       expiresToday: 'läuft heute ab',
@@ -382,6 +384,15 @@ export class ItemsPageComponent {
     const input = event.target as HTMLInputElement;
     this.editItemPictureFile = input.files?.[0] ?? null;
     this.setEditPreview(this.editItemPictureFile);
+  }
+
+  clearEditPicture(input?: HTMLInputElement): void {
+    this.editItem.pictureKey = null;
+    this.editItemPictureFile = null;
+    this.clearEditPreview();
+    if (input) {
+      input.value = '';
+    }
   }
 
   private loadItems(): void {

@@ -334,6 +334,7 @@
           class="file-input file-input-bordered file-input-sm"
           type="file"
           accept="image/*"
+          #editPictureInput
           (change)="onEditPictureSelected($event)"
         />
         <div class="mt-2" *ngIf="editItemPreviewUrl">
@@ -343,6 +344,14 @@
           {{ editItem.pictureKey }}
         </span>
         <span class="text-xs opacity-70 mt-1" *ngIf="editItemPictureFile">{{ editItemPictureFile.name }}</span>
+        <button
+          class="btn btn-xs btn-outline mt-2"
+          type="button"
+          *ngIf="editItem.pictureKey || editItemPictureFile"
+          (click)="clearEditPicture(editPictureInput)"
+        >
+          {{ t('removePicture') }}
+        </button>
       </label>
     </div>
 

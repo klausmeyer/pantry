@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -12,8 +13,9 @@ import (
 )
 
 type ItemService struct {
-	repo repository.ItemRepository
-	ids  *id.Generator
+	repo           repository.ItemRepository
+	ids            *id.Generator
+	pictureRemover PictureRemover
 }
 
 type CreateItemInput struct {
@@ -31,8 +33,12 @@ type ListItemsInput struct {
 	Search string
 }
 
-func NewItemService(repo repository.ItemRepository, ids *id.Generator) *ItemService {
-	return &ItemService{repo: repo, ids: ids}
+type PictureRemover interface {
+	Delete(ctx context.Context, key string) error
+}
+
+func NewItemService(repo repository.ItemRepository, ids *id.Generator, pictureRemover PictureRemover) *ItemService {
+	return &ItemService{repo: repo, ids: ids, pictureRemover: pictureRemover}
 }
 
 func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.Item, error) {
@@ -65,6 +71,11 @@ func (s *ItemService) Update(ctx context.Context, id string, input CreateItemInp
 		return item.Item{}, err
 	}
 
+	existing, err := s.repo.GetByID(ctx, strings.TrimSpace(id))
+	if err != nil {
+		return item.Item{}, err
+	}
+
 	now := time.Now().UTC()
 	updated := item.Item{
 		ID:            strings.TrimSpace(id),
@@ -78,7 +89,14 @@ func (s *ItemService) Update(ctx context.Context, id string, input CreateItemInp
 		UpdatedAt:     now,
 	}
 
-	return s.repo.Update(ctx, updated)
+	updated, err = s.repo.Update(ctx, updated)
+	if err != nil {
+		return item.Item{}, err
+	}
+
+	s.cleanupOldPicture(ctx, existing.PictureKey, updated.PictureKey)
+
+	return updated, nil
 }
 
 func validateCreateOrUpdateInput(input CreateItemInput) error {
@@ -108,6 +126,18 @@ func normalizePictureKey(key *string) *string {
 		return nil
 	}
 	return &trimmed
+}
+
+func (s *ItemService) cleanupOldPicture(ctx context.Context, previous, current *string) {
+	if s.pictureRemover == nil || previous == nil {
+		return
+	}
+	if current != nil && *current == *previous {
+		return
+	}
+	if err := s.pictureRemover.Delete(ctx, *previous); err != nil {
+		log.Printf("failed to delete picture key=%s: %v", *previous, err)
+	}
 }
 
 func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {

@@ -37,14 +37,14 @@ func New(cfg config.Config) (*App, error) {
 	}
 
 	ids := id.NewGenerator()
-	itemsService := service.NewItemService(repo, ids)
-	itemsHandler := handler.NewItemsHandler(itemsService)
-
 	presigner, err := storage.NewS3Presigner(context.Background(), cfg.S3)
 	if err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("init s3 presigner: %w", err)
 	}
+
+	itemsService := service.NewItemService(repo, ids, presigner)
+	itemsHandler := handler.NewItemsHandler(itemsService)
 	uploadsHandler := handler.NewUploadsHandler(presigner, ids)
 
 	if cfg.Seed.DevData {

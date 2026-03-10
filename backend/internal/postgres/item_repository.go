@@ -151,6 +151,49 @@ RETURNING created_at, updated_at;
 	return i, nil
 }
 
+func (r *ItemRepository) GetByID(ctx context.Context, id string) (item.Item, error) {
+	const query = `
+SELECT id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
+FROM items
+WHERE id = $1 AND deleted_at IS NULL;
+`
+
+	var (
+		i           item.Item
+		contentUnit string
+		comment     sql.NullString
+		pictureKey  sql.NullString
+	)
+
+	if err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&i.ID,
+		&i.Name,
+		&i.BestBefore,
+		&i.ContentAmount,
+		&contentUnit,
+		&i.Packaging,
+		&pictureKey,
+		&comment,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return item.Item{}, repository.ErrNotFound
+		}
+		return item.Item{}, fmt.Errorf("get item: %w", err)
+	}
+
+	i.ContentUnit = item.Unit(contentUnit)
+	if pictureKey.Valid {
+		i.PictureKey = &pictureKey.String
+	}
+	if comment.Valid {
+		i.Comment = &comment.String
+	}
+
+	return i, nil
+}
+
 func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInput) ([]item.Item, error) {
 	where := "deleted_at IS NULL"
 	args := []any{}
