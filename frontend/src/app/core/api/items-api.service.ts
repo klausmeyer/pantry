@@ -78,38 +78,41 @@ export class ItemsApiService {
   }
 
   uploadPicture(file: File): Observable<string> {
-    const contentType = this.resolveContentType(file);
-
-    return this.http
-      .post<UploadResponse>(
-        `${this.baseUrl}/uploads`,
-        { filename: file.name, content_type: contentType },
-        {
-          headers: {
-            Accept: 'application/vnd.api+json',
-            'Content-Type': 'application/json'
-          }
-        }
-      )
-      .pipe(
-        switchMap((response) => {
-          const { upload_url, picture_key, headers } = response.data.attributes;
-          return from(
-            fetch(upload_url, {
-              method: 'PUT',
-              headers,
-              body: file
-            })
-          ).pipe(
-            switchMap((uploadResponse) => {
-              if (!uploadResponse.ok) {
-                return throwError(() => new Error('Upload failed'));
+    return from(this.prepareUploadFile(file)).pipe(
+      switchMap((preparedFile) => {
+        const contentType = this.resolveContentType(preparedFile);
+        return this.http
+          .post<UploadResponse>(
+            `${this.baseUrl}/uploads`,
+            { filename: preparedFile.name, content_type: contentType },
+            {
+              headers: {
+                Accept: 'application/vnd.api+json',
+                'Content-Type': 'application/json'
               }
-              return of(picture_key);
+            }
+          )
+          .pipe(
+            switchMap((response) => {
+              const { upload_url, picture_key, headers } = response.data.attributes;
+              return from(
+                fetch(upload_url, {
+                  method: 'PUT',
+                  headers,
+                  body: preparedFile
+                })
+              ).pipe(
+                switchMap((uploadResponse) => {
+                  if (!uploadResponse.ok) {
+                    return throwError(() => new Error('Upload failed'));
+                  }
+                  return of(picture_key);
+                })
+              );
             })
           );
-        })
-      );
+      })
+    );
   }
 
   getPicturePreviewUrl(pictureKey: string): Observable<string> {
@@ -192,6 +195,73 @@ export class ItemsApiService {
       return 'image/gif';
     }
     return 'application/octet-stream';
+  }
+
+  private async prepareUploadFile(file: File): Promise<File> {
+    const contentType = this.resolveContentType(file);
+    if (!this.shouldResize(contentType)) {
+      return file;
+    }
+
+    const image = await this.loadImage(file);
+    const { width, height } = image;
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(width, height));
+
+    if (scale >= 1) {
+      return file;
+    }
+
+    const targetWidth = Math.max(1, Math.round(width * scale));
+    const targetHeight = Math.max(1, Math.round(height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return file;
+    }
+
+    ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      if (contentType === 'image/png') {
+        canvas.toBlob(resolve, contentType);
+        return;
+      }
+      const quality = 0.85;
+      canvas.toBlob(resolve, contentType, quality);
+    });
+
+    if (!blob) {
+      return file;
+    }
+
+    return new File([blob], file.name, {
+      type: contentType,
+      lastModified: file.lastModified
+    });
+  }
+
+  private shouldResize(contentType: string): boolean {
+    return contentType === 'image/jpeg' || contentType === 'image/jpg' || contentType === 'image/png' || contentType === 'image/webp';
+  }
+
+  private loadImage(file: File): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Image load failed'));
+      };
+      img.src = url;
+    });
   }
 }
 
