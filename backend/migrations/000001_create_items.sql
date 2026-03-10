@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS items (
   content_amount DOUBLE PRECISION NOT NULL,
   content_unit TEXT NOT NULL,
   packaging TEXT NOT NULL,
-  picture_key TEXT NOT NULL,
+  picture_key TEXT,
   comment TEXT,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,

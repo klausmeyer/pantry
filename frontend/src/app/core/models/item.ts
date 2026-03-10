@@ -8,7 +8,7 @@ export interface Item {
   contentAmount: number;
   contentUnit: ContentUnit;
   packaging: Packaging;
-  pictureKey: string;
+  pictureKey: string | null;
   comment?: string;
   createdAt: string;
   updatedAt: string;
@@ -20,7 +20,7 @@ export interface JsonApiItemAttributes {
   content_amount: number;
   content_unit: ContentUnit;
   packaging: Packaging;
-  picture_key: string;
+  picture_key: string | null;
   comment?: string;
   created_at: string;
   updated_at: string;
@@ -45,6 +45,6 @@ export interface CreateItemInput {
   contentAmount: number;
   contentUnit: ContentUnit;
   packaging: Packaging;
-  pictureKey: string;
+  pictureKey: string | null;
   comment?: string;
 }

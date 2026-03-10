@@ -22,7 +22,7 @@ type CreateItemInput struct {
 	ContentAmount float64
 	ContentUnit   item.Unit
 	Packaging     item.Packaging
-	PictureKey    string
+	PictureKey    *string
 	Comment       *string
 }
 
@@ -48,7 +48,7 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 		ContentAmount: input.ContentAmount,
 		ContentUnit:   input.ContentUnit,
 		Packaging:     input.Packaging,
-		PictureKey:    strings.TrimSpace(input.PictureKey),
+		PictureKey:    normalizePictureKey(input.PictureKey),
 		Comment:       input.Comment,
 		CreatedAt:     now,
 		UpdatedAt:     now,
@@ -73,7 +73,7 @@ func (s *ItemService) Update(ctx context.Context, id string, input CreateItemInp
 		ContentAmount: input.ContentAmount,
 		ContentUnit:   input.ContentUnit,
 		Packaging:     input.Packaging,
-		PictureKey:    strings.TrimSpace(input.PictureKey),
+		PictureKey:    normalizePictureKey(input.PictureKey),
 		Comment:       input.Comment,
 		UpdatedAt:     now,
 	}
@@ -97,6 +97,17 @@ func validateCreateOrUpdateInput(input CreateItemInput) error {
 		return errors.New("packaging must be one of can, box, bag, jar, other")
 	}
 	return nil
+}
+
+func normalizePictureKey(key *string) *string {
+	if key == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*key)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }
 
 func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {

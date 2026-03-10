@@ -41,7 +41,7 @@ func seedDevelopmentItems(ctx context.Context, svc *service.ItemService, count i
 			ContentAmount: float64(100 + (i % 20 * 25)),
 			ContentUnit:   units[i%len(units)],
 			Packaging:     seedPackaging(i),
-			PictureKey:    fmt.Sprintf("items/seed-%03d.png", i+1),
+			PictureKey:    nil,
 			Comment:       comment,
 		}); err != nil {
 			return fmt.Errorf("create seed item %d: %w", i+1, err)

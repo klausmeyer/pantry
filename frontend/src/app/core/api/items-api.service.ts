@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { from, map, Observable, of, switchMap, throwError } from 'rxjs';
 import {
   CreateItemInput,
   Item,
@@ -55,7 +55,7 @@ export class ItemsApiService {
           content_amount: input.contentAmount,
           content_unit: input.contentUnit,
           packaging: input.packaging,
-          picture_key: input.pictureKey,
+          picture_key: input.pictureKey ?? null,
           comment: input.comment?.trim() ? input.comment : null
         }
       }
@@ -77,6 +77,50 @@ export class ItemsApiService {
     });
   }
 
+  uploadPicture(file: File): Observable<string> {
+    const contentType = this.resolveContentType(file);
+
+    return this.http
+      .post<UploadResponse>(
+        `${this.baseUrl}/uploads`,
+        { filename: file.name, content_type: contentType },
+        {
+          headers: {
+            Accept: 'application/vnd.api+json',
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      .pipe(
+        switchMap((response) => {
+          const { upload_url, picture_key, headers } = response.data.attributes;
+          return from(
+            fetch(upload_url, {
+              method: 'PUT',
+              headers,
+              body: file
+            })
+          ).pipe(
+            switchMap((uploadResponse) => {
+              if (!uploadResponse.ok) {
+                return throwError(() => new Error('Upload failed'));
+              }
+              return of(picture_key);
+            })
+          );
+        })
+      );
+  }
+
+  getPicturePreviewUrl(pictureKey: string): Observable<string> {
+    return this.http
+      .get<UploadPreviewResponse>(`${this.baseUrl}/uploads/preview`, {
+        headers: { Accept: 'application/vnd.api+json' },
+        params: { picture_key: pictureKey }
+      })
+      .pipe(map((response) => response.data.attributes.preview_url));
+  }
+
   private resolveBaseUrl(): string {
     if (typeof window !== 'undefined' && window.location.port === '4200') {
       return 'http://localhost:4000/api';
@@ -93,7 +137,7 @@ export class ItemsApiService {
         content_amount: number;
         content_unit: CreateItemInput['contentUnit'];
         packaging: CreateItemInput['packaging'];
-        picture_key: string;
+        picture_key: string | null;
         comment: string | null;
       };
     };
@@ -107,7 +151,7 @@ export class ItemsApiService {
           content_amount: input.contentAmount,
           content_unit: input.contentUnit,
           packaging: input.packaging,
-          picture_key: input.pictureKey,
+          picture_key: input.pictureKey ?? null,
           comment: input.comment?.trim() ? input.comment : null
         }
       }
@@ -128,4 +172,46 @@ export class ItemsApiService {
       updatedAt: resource.attributes.updated_at
     };
   }
+
+  private resolveContentType(file: File): string {
+    if (file.type) {
+      return file.type;
+    }
+
+    const lower = file.name.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return 'image/png';
+    }
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      return 'image/jpeg';
+    }
+    if (lower.endsWith('.webp')) {
+      return 'image/webp';
+    }
+    if (lower.endsWith('.gif')) {
+      return 'image/gif';
+    }
+    return 'application/octet-stream';
+  }
 }
+
+type UploadResponse = {
+  data: {
+    type: 'uploads';
+    attributes: {
+      picture_key: string;
+      upload_url: string;
+      headers: Record<string, string>;
+    };
+  };
+};
+
+type UploadPreviewResponse = {
+  data: {
+    type: 'uploads';
+    attributes: {
+      picture_key: string;
+      preview_url: string;
+    };
+  };
+};

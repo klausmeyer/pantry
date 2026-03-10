@@ -27,7 +27,7 @@ type Item struct {
 	ContentAmount float64
 	ContentUnit   Unit
 	Packaging     Packaging
-	PictureKey    string
+	PictureKey    *string
 	Comment       *string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

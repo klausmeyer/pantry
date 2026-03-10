@@ -1,6 +1,6 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { catchError, of } from 'rxjs';
+import { Observable, catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
 import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';
 import { FormsModule } from '@angular/forms';
@@ -28,16 +28,25 @@ export class ItemsPageComponent {
   createError = '';
   showCreateModal = false;
   showEditModal = false;
+  showPreviewModal = false;
   editLoading = false;
   editError = '';
   editingItemId = '';
+  newItemPictureFile: File | null = null;
+  editItemPictureFile: File | null = null;
+  newItemPreviewUrl: string | null = null;
+  editItemPreviewUrl: string | null = null;
+  previewUrl: string | null = null;
+  previewLoading = false;
+  previewError = '';
+  previewItemName = '';
   newItem: CreateItemInput = {
     name: '',
     bestBefore: '',
     contentAmount: 1,
     contentUnit: 'grams',
     packaging: 'other',
-    pictureKey: '',
+    pictureKey: null,
     comment: ''
   };
   editItem: CreateItemInput = {
@@ -46,7 +55,7 @@ export class ItemsPageComponent {
     contentAmount: 1,
     contentUnit: 'grams',
     packaging: 'other',
-    pictureKey: '',
+    pictureKey: null,
     comment: ''
   };
 
@@ -69,7 +78,7 @@ export class ItemsPageComponent {
       contentAmount: 'Content amount',
       contentUnit: 'Content unit',
       packaging: 'Packaging',
-      pictureKey: 'Picture key',
+      pictureKey: 'Picture',
       commentOptional: 'Comment (optional)',
       cancel: 'Cancel',
       creating: 'Creating...',
@@ -83,6 +92,11 @@ export class ItemsPageComponent {
       noItemsYet: 'No items yet',
       createFirstItem: 'Create your first item through the API and refresh.',
       deleteConfirm: 'Delete this item? This will hide it from the list.',
+      preview: 'Preview',
+      previewTitle: 'Picture preview',
+      previewLoading: 'Loading preview...',
+      previewMissing: 'No picture uploaded yet.',
+      previewFailed: 'Failed to load preview.',
       edit: 'Edit',
       delete: 'Delete',
       expiresToday: 'expires today',
@@ -117,7 +131,7 @@ export class ItemsPageComponent {
       contentAmount: 'Inhalt (Menge)',
       contentUnit: 'Einheit',
       packaging: 'Verpackung',
-      pictureKey: 'Bild-Schlüssel',
+      pictureKey: 'Bild',
       commentOptional: 'Kommentar (optional)',
       cancel: 'Abbrechen',
       creating: 'Erstelle...',
@@ -131,6 +145,11 @@ export class ItemsPageComponent {
       noItemsYet: 'Noch keine Artikel',
       createFirstItem: 'Erstelle den ersten Artikel über die API und aktualisiere dann.',
       deleteConfirm: 'Diesen Artikel löschen? Er wird aus der Liste ausgeblendet.',
+      preview: 'Vorschau',
+      previewTitle: 'Bildvorschau',
+      previewLoading: 'Vorschau wird geladen...',
+      previewMissing: 'Noch kein Bild hochgeladen.',
+      previewFailed: 'Vorschau konnte nicht geladen werden.',
       edit: 'Bearbeiten',
       delete: 'Löschen',
       expiresToday: 'läuft heute ab',
@@ -201,6 +220,41 @@ export class ItemsPageComponent {
     });
   }
 
+  openPreviewModal(item: Item): void {
+    this.previewError = '';
+    this.previewItemName = item.name;
+    this.previewUrl = null;
+    this.previewLoading = true;
+    this.showPreviewModal = true;
+
+    if (!item.pictureKey) {
+      this.previewLoading = false;
+      this.previewError = this.t('previewMissing');
+      return;
+    }
+
+    this.api.getPicturePreviewUrl(item.pictureKey).subscribe({
+      next: (url) => {
+        this.previewLoading = false;
+        this.previewUrl = url;
+      },
+      error: () => {
+        this.previewLoading = false;
+        this.previewError = this.t('previewFailed');
+      }
+    });
+  }
+
+  closePreviewModal(): void {
+    if (this.previewLoading) {
+      return;
+    }
+    this.showPreviewModal = false;
+    this.previewUrl = null;
+    this.previewItemName = '';
+    this.previewError = '';
+  }
+
   createItem(): void {
     if (this.createLoading) {
       return;
@@ -209,31 +263,46 @@ export class ItemsPageComponent {
     this.createLoading = true;
     this.createError = '';
 
-    this.api.create(this.newItem).subscribe({
-      next: () => {
-        this.createLoading = false;
-        this.showCreateModal = false;
-        this.newItem = {
-          name: '',
-          bestBefore: '',
-          contentAmount: 1,
-          contentUnit: this.newItem.contentUnit,
-          packaging: this.newItem.packaging,
-          pictureKey: '',
-          comment: ''
-        };
-        this.loadItems();
-      },
-      error: () => {
-        this.createLoading = false;
-        this.createError = this.t('failedCreate');
-      }
-    });
+    this.uploadPictureIfNeeded(this.newItemPictureFile)
+      .pipe(
+        switchMap((pictureKey) => {
+          const payload: CreateItemInput = {
+            ...this.newItem,
+            pictureKey: pictureKey ?? this.newItem.pictureKey
+          };
+          return this.api.create(payload);
+        }),
+        finalize(() => {
+          this.createLoading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.showCreateModal = false;
+          this.newItemPictureFile = null;
+          this.clearNewPreview();
+          this.newItem = {
+            name: '',
+            bestBefore: '',
+            contentAmount: 1,
+            contentUnit: this.newItem.contentUnit,
+            packaging: this.newItem.packaging,
+            pictureKey: null,
+            comment: ''
+          };
+          this.loadItems();
+        },
+        error: () => {
+          this.createError = this.t('failedCreate');
+        }
+      });
   }
 
   openEditModal(item: Item): void {
     this.editError = '';
     this.editingItemId = item.id;
+    this.editItemPictureFile = null;
+    this.clearEditPreview();
     this.editItem = {
       name: item.name,
       bestBefore: item.bestBefore,
@@ -244,12 +313,15 @@ export class ItemsPageComponent {
       comment: item.comment ?? ''
     };
     this.showEditModal = true;
+    this.loadEditPreview();
   }
 
   closeEditModal(): void {
     if (this.editLoading) {
       return;
     }
+    this.editItemPictureFile = null;
+    this.clearEditPreview();
     this.showEditModal = false;
   }
 
@@ -260,17 +332,30 @@ export class ItemsPageComponent {
 
     this.editLoading = true;
     this.editError = '';
-    this.api.update(this.editingItemId, this.editItem).subscribe({
-      next: () => {
-        this.editLoading = false;
-        this.showEditModal = false;
-        this.loadItems();
-      },
-      error: () => {
-        this.editLoading = false;
-        this.editError = this.t('failedUpdate');
-      }
-    });
+    this.uploadPictureIfNeeded(this.editItemPictureFile)
+      .pipe(
+        switchMap((pictureKey) => {
+          const payload: CreateItemInput = {
+            ...this.editItem,
+            pictureKey: pictureKey ?? this.editItem.pictureKey
+          };
+          return this.api.update(this.editingItemId, payload);
+        }),
+        finalize(() => {
+          this.editLoading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.showEditModal = false;
+          this.editItemPictureFile = null;
+          this.clearEditPreview();
+          this.loadItems();
+        },
+        error: () => {
+          this.editError = this.t('failedUpdate');
+        }
+      });
   }
 
   openCreateModal(): void {
@@ -282,7 +367,21 @@ export class ItemsPageComponent {
     if (this.createLoading) {
       return;
     }
+    this.newItemPictureFile = null;
+    this.clearNewPreview();
     this.showCreateModal = false;
+  }
+
+  onNewPictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.newItemPictureFile = input.files?.[0] ?? null;
+    this.setNewPreview(this.newItemPictureFile);
+  }
+
+  onEditPictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.editItemPictureFile = input.files?.[0] ?? null;
+    this.setEditPreview(this.editItemPictureFile);
   }
 
   private loadItems(): void {
@@ -301,6 +400,62 @@ export class ItemsPageComponent {
       .subscribe((items) => {
         this.items = items;
         this.loading = false;
+      });
+  }
+
+  private uploadPictureIfNeeded(file: File | null): Observable<string | null> {
+    if (!file) {
+      return of(null);
+    }
+    return this.api.uploadPicture(file);
+  }
+
+  private setNewPreview(file: File | null): void {
+    this.clearNewPreview();
+    if (!file) {
+      return;
+    }
+    this.newItemPreviewUrl = URL.createObjectURL(file);
+  }
+
+  private setEditPreview(file: File | null): void {
+    this.clearEditPreview();
+    if (!file) {
+      return;
+    }
+    this.editItemPreviewUrl = URL.createObjectURL(file);
+  }
+
+  private clearNewPreview(): void {
+    if (this.newItemPreviewUrl) {
+      URL.revokeObjectURL(this.newItemPreviewUrl);
+    }
+    this.newItemPreviewUrl = null;
+  }
+
+  private clearEditPreview(): void {
+    if (this.editItemPreviewUrl) {
+      URL.revokeObjectURL(this.editItemPreviewUrl);
+    }
+    this.editItemPreviewUrl = null;
+  }
+
+  private loadEditPreview(): void {
+    if (!this.editItem.pictureKey) {
+      return;
+    }
+    this.api
+      .getPicturePreviewUrl(this.editItem.pictureKey)
+      .pipe(
+        tap((url) => {
+          this.clearEditPreview();
+          this.editItemPreviewUrl = url;
+        })
+      )
+      .subscribe({
+        error: () => {
+          this.clearEditPreview();
+        }
       });
   }
 

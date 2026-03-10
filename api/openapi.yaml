@@ -111,6 +111,115 @@ paths:
                   - status: '500'
                     title: internal error
                     detail: database unavailable
+  /api/uploads:
+    post:
+      tags: [Uploads]
+      summary: Create a direct upload for an item picture
+      operationId: createUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadRequest'
+            example:
+              filename: rice.png
+              content_type: image/png
+      responses:
+        '201':
+          description: Presigned upload URL for direct S3 upload
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UploadResponseDocument'
+              example:
+                data:
+                  type: uploads
+                  attributes:
+                    picture_key: items/01957a1a-8c2f-7b1d-9b2f-2f5e7b9a0f91.png
+                    upload_url: https://s3.example.com/pantry/items/01957a1a-8c2f-7b1d-9b2f-2f5e7b9a0f91.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...
+                    headers:
+                      Content-Type: image/png
+        '400':
+          description: Invalid upload request
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '400'
+                    title: invalid content_type
+                    detail: only jpeg, png, webp, or gif images are supported
+        '415':
+          description: Unsupported media type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '415'
+                    title: unsupported media type
+                    detail: content-type must be application/json
+        '500':
+          description: Internal error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '500'
+                    title: upload error
+                    detail: could not create upload URL
+  /api/uploads/preview:
+    get:
+      tags: [Uploads]
+      summary: Create a presigned preview URL for an item picture
+      operationId: getUploadPreview
+      parameters:
+        - in: query
+          name: picture_key
+          required: true
+          schema:
+            type: string
+          description: The picture key stored on the item
+      responses:
+        '200':
+          description: Presigned preview URL
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UploadPreviewDocument'
+              example:
+                data:
+                  type: uploads
+                  attributes:
+                    picture_key: items/01957a1a-8c2f-7b1d-9b2f-2f5e7b9a0f91.png
+                    preview_url: https://s3.example.com/pantry/items/01957a1a-8c2f-7b1d-9b2f-2f5e7b9a0f91.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...
+        '400':
+          description: Invalid picture key
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '400'
+                    title: invalid picture_key
+                    detail: picture_key query parameter is required
+        '500':
+          description: Internal error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '500'
+                    title: preview error
+                    detail: could not create preview URL
     post:
       tags: [Items]
       summary: Create a pantry item
@@ -354,7 +463,9 @@ components:
           type: string
           enum: [can, box, bag, jar, other]
         picture_key:
-          type: string
+          type:
+            - string
+            - 'null'
         comment:
           type:
             - string
@@ -371,9 +482,76 @@ components:
         - content_amount
         - content_unit
         - packaging
-        - picture_key
         - created_at
         - updated_at
+
+    UploadRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        filename:
+          type: string
+        content_type:
+          type: string
+      required: [filename, content_type]
+
+    UploadAttributes:
+      type: object
+      additionalProperties: false
+      properties:
+        picture_key:
+          type: string
+        upload_url:
+          type: string
+          format: uri
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+      required: [picture_key, upload_url, headers]
+
+    UploadPreviewAttributes:
+      type: object
+      additionalProperties: false
+      properties:
+        picture_key:
+          type: string
+        preview_url:
+          type: string
+          format: uri
+      required: [picture_key, preview_url]
+
+    UploadResponseDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum: [uploads]
+            attributes:
+              $ref: '#/components/schemas/UploadAttributes'
+          required: [type, attributes]
+      required: [data]
+
+    UploadPreviewDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum: [uploads]
+            attributes:
+              $ref: '#/components/schemas/UploadPreviewAttributes'
+          required: [type, attributes]
+      required: [data]
 
     ItemListDocument:
       type: object
@@ -489,7 +667,9 @@ components:
           type: string
           enum: [can, box, bag, jar, other]
         picture_key:
-          type: string
+          type:
+            - string
+            - 'null'
         comment:
           type:
             - string
@@ -500,7 +680,6 @@ components:
         - content_amount
         - content_unit
         - packaging
-        - picture_key
 
     UpdateItemDocument:
       type: object

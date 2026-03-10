@@ -13,6 +13,7 @@ import (
 	"github.com/klausmeyer/pantry/backend/internal/id"
 	"github.com/klausmeyer/pantry/backend/internal/postgres"
 	"github.com/klausmeyer/pantry/backend/internal/service"
+	"github.com/klausmeyer/pantry/backend/internal/storage"
 )
 
 type App struct {
@@ -39,6 +40,13 @@ func New(cfg config.Config) (*App, error) {
 	itemsService := service.NewItemService(repo, ids)
 	itemsHandler := handler.NewItemsHandler(itemsService)
 
+	presigner, err := storage.NewS3Presigner(context.Background(), cfg.S3)
+	if err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("init s3 presigner: %w", err)
+	}
+	uploadsHandler := handler.NewUploadsHandler(presigner, ids)
+
 	if cfg.Seed.DevData {
 		seedCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
@@ -55,6 +63,8 @@ func New(cfg config.Config) (*App, error) {
 	mux.HandleFunc("POST /api/items", itemsHandler.Create)
 	mux.HandleFunc("PATCH /api/items/{id}", itemsHandler.Update)
 	mux.HandleFunc("DELETE /api/items/{id}", itemsHandler.Delete)
+	mux.HandleFunc("POST /api/uploads", uploadsHandler.Create)
+	mux.HandleFunc("GET /api/uploads/preview", uploadsHandler.Preview)
 
 	log.Printf("db configured for %s:%d/%s", cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)
 	log.Printf("s3 configured for %s bucket=%s", cfg.S3.Endpoint, cfg.S3.Bucket)

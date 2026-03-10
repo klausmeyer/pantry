@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS items (
   content_amount DOUBLE PRECISION NOT NULL,
   content_unit TEXT NOT NULL,
   packaging TEXT NOT NULL DEFAULT 'other',
-  picture_key TEXT NOT NULL,
+  picture_key TEXT,
   comment TEXT,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,
@@ -37,6 +37,17 @@ ADD COLUMN IF NOT EXISTS packaging TEXT NOT NULL DEFAULT 'other';
 const ensureDeletedAtColumnSQL = `
 ALTER TABLE items
 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+`
+
+const allowNullPictureKeySQL = `
+ALTER TABLE items
+ALTER COLUMN picture_key DROP NOT NULL;
+`
+
+const normalizeEmptyPictureKeySQL = `
+UPDATE items
+SET picture_key = NULL
+WHERE picture_key = '';
 `
 
 type ItemRepository struct {
@@ -62,6 +73,12 @@ func (r *ItemRepository) ensureSchema(ctx context.Context) error {
 	}
 	if _, err := r.db.ExecContext(ctx, ensureDeletedAtColumnSQL); err != nil {
 		return fmt.Errorf("ensure deleted_at column: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, allowNullPictureKeySQL); err != nil {
+		return fmt.Errorf("allow null picture_key: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, normalizeEmptyPictureKeySQL); err != nil {
+		return fmt.Errorf("normalize picture_key: %w", err)
 	}
 	return nil
 }
@@ -182,6 +199,7 @@ ORDER BY %s;
 			i           item.Item
 			contentUnit string
 			comment     sql.NullString
+			pictureKey  sql.NullString
 		)
 
 		if err := rows.Scan(
@@ -191,7 +209,7 @@ ORDER BY %s;
 			&i.ContentAmount,
 			&contentUnit,
 			&i.Packaging,
-			&i.PictureKey,
+			&pictureKey,
 			&comment,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -200,6 +218,9 @@ ORDER BY %s;
 		}
 
 		i.ContentUnit = item.Unit(contentUnit)
+		if pictureKey.Valid {
+			i.PictureKey = &pictureKey.String
+		}
 		if comment.Valid {
 			i.Comment = &comment.String
 		}

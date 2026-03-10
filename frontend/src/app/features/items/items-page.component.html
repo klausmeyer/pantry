@@ -135,7 +135,16 @@
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
-        <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.pictureKey" name="pictureKey" />
+        <input
+          class="file-input file-input-bordered file-input-sm"
+          type="file"
+          accept="image/*"
+          (change)="onNewPictureSelected($event)"
+        />
+        <div class="mt-2" *ngIf="newItemPreviewUrl">
+          <img class="h-16 w-16 rounded-md object-cover ring-1 ring-base-300" [src]="newItemPreviewUrl" alt="Preview" />
+        </div>
+        <span class="text-xs opacity-70 mt-1" *ngIf="newItemPictureFile">{{ newItemPictureFile.name }}</span>
       </label>
     </div>
 
@@ -186,6 +195,27 @@
       <p *ngIf="item.comment">{{ item.comment }}</p>
       <div class="card-actions justify-end">
         <div class="flex items-center gap-1">
+          <button
+            *ngIf="item.pictureKey"
+            class="btn btn-xs btn-circle btn-ghost text-primary"
+            type="button"
+            [attr.aria-label]="'Preview ' + item.name"
+            [attr.title]="t('preview')"
+            (click)="openPreviewModal(item)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-4 w-4"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z" />
+            </svg>
+          </button>
           <button
             class="btn btn-xs btn-circle btn-ghost text-info"
             type="button"
@@ -300,7 +330,19 @@
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
-        <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.pictureKey" name="editPictureKey" />
+        <input
+          class="file-input file-input-bordered file-input-sm"
+          type="file"
+          accept="image/*"
+          (change)="onEditPictureSelected($event)"
+        />
+        <div class="mt-2" *ngIf="editItemPreviewUrl">
+          <img class="h-16 w-16 rounded-md object-cover ring-1 ring-base-300" [src]="editItemPreviewUrl" alt="Preview" />
+        </div>
+        <span class="text-xs opacity-70 mt-1" *ngIf="editItem.pictureKey && !editItemPictureFile">
+          {{ editItem.pictureKey }}
+        </span>
+        <span class="text-xs opacity-70 mt-1" *ngIf="editItemPictureFile">{{ editItemPictureFile.name }}</span>
       </label>
     </div>
 
@@ -323,6 +365,35 @@
     </div>
   </div>
   <button class="modal-backdrop" type="button" [disabled]="editLoading" (click)="closeEditModal()">
+    Close
+  </button>
+</div>
+
+<div class="modal" [class.modal-open]="showPreviewModal">
+  <div class="modal-box w-11/12 max-w-lg">
+    <h3 class="font-bold text-lg">{{ t('previewTitle') }}</h3>
+    <p class="text-sm opacity-70" *ngIf="previewItemName">{{ previewItemName }}</p>
+
+    <div class="mt-4 flex items-center justify-center" *ngIf="previewLoading">
+      <span class="loading loading-spinner loading-md"></span>
+      <span class="ml-2 text-sm opacity-70">{{ t('previewLoading') }}</span>
+    </div>
+
+    <div class="mt-4" *ngIf="previewUrl">
+      <img class="max-h-[70vh] w-full rounded-md object-contain ring-1 ring-base-300" [src]="previewUrl" alt="Preview" />
+    </div>
+
+    <div class="alert alert-error mt-4" *ngIf="previewError">
+      <span>{{ previewError }}</span>
+    </div>
+
+    <div class="modal-action">
+      <button class="btn btn-ghost btn-sm" type="button" [disabled]="previewLoading" (click)="closePreviewModal()">
+        {{ t('cancel') }}
+      </button>
+    </div>
+  </div>
+  <button class="modal-backdrop" type="button" [disabled]="previewLoading" (click)="closePreviewModal()">
     Close
   </button>
 </div>

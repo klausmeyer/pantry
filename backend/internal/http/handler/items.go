@@ -33,7 +33,7 @@ type itemAttributes struct {
 	ContentAmount float64 `json:"content_amount"`
 	ContentUnit   string  `json:"content_unit"`
 	Packaging     string  `json:"packaging"`
-	PictureKey    string  `json:"picture_key"`
+	PictureKey    *string `json:"picture_key"`
 	Comment       *string `json:"comment,omitempty"`
 	CreatedAt     string  `json:"created_at"`
 	UpdatedAt     string  `json:"updated_at"`
@@ -51,7 +51,7 @@ type createItemAttributes struct {
 	ContentAmount float64        `json:"content_amount"`
 	ContentUnit   item.Unit      `json:"content_unit"`
 	Packaging     item.Packaging `json:"packaging"`
-	PictureKey    string         `json:"picture_key"`
+	PictureKey    *string        `json:"picture_key"`
 	Comment       *string        `json:"comment"`
 }
 
