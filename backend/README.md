@@ -83,7 +83,7 @@ curl -X POST http://localhost:4000/api/items \
   - returns `204 No Content`
   - deleted items are excluded from `GET /api/items`
 - `packaging` is required and must be one of:
-  - `can | box | bag | jar | other`
+  - `bottle | can | box | bag | jar | package | other`
 - Validation and parsing failures return JSON:API error documents:
   - `{ "errors": [ { "status": "400", "title": "...", "detail": "..." } ] }`
 

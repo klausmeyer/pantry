@@ -138,10 +138,12 @@
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
         <select class="select select-bordered select-sm" [(ngModel)]="newItem.packaging" name="packaging">
+          <option value="bottle">{{ packagingLabel('bottle') }}</option>
           <option value="can">{{ packagingLabel('can') }}</option>
           <option value="box">{{ packagingLabel('box') }}</option>
           <option value="bag">{{ packagingLabel('bag') }}</option>
           <option value="jar">{{ packagingLabel('jar') }}</option>
+          <option value="package">{{ packagingLabel('package') }}</option>
           <option value="other">{{ packagingLabel('other') }}</option>
         </select>
       </label>
@@ -332,10 +334,12 @@
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
         <select class="select select-bordered select-sm" [(ngModel)]="editItem.packaging" name="editPackaging">
+          <option value="bottle">{{ packagingLabel('bottle') }}</option>
           <option value="can">{{ packagingLabel('can') }}</option>
           <option value="box">{{ packagingLabel('box') }}</option>
           <option value="bag">{{ packagingLabel('bag') }}</option>
           <option value="jar">{{ packagingLabel('jar') }}</option>
+          <option value="package">{{ packagingLabel('package') }}</option>
           <option value="other">{{ packagingLabel('other') }}</option>
         </select>
       </label>

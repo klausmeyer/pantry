@@ -113,10 +113,12 @@ export class ItemsPageComponent {
       unit_grams: 'grams',
       unit_ml: 'ml',
       unit_l: 'l',
+      packaging_bottle: 'bottle',
       packaging_can: 'can',
       packaging_box: 'box',
       packaging_bag: 'bag',
       packaging_jar: 'jar',
+      packaging_package: 'package',
       packaging_other: 'other'
     },
     de: {
@@ -171,10 +173,12 @@ export class ItemsPageComponent {
       unit_grams: 'g',
       unit_ml: 'ml',
       unit_l: 'l',
+      packaging_bottle: 'Flasche',
       packaging_can: 'Dose',
       packaging_box: 'Packung',
       packaging_bag: 'Tüte',
       packaging_jar: 'Glas',
+      packaging_package: 'Packung',
       packaging_other: 'Sonstiges'
     }
   };
@@ -547,7 +551,7 @@ export class ItemsPageComponent {
     return this.t(`unit_${unit}`);
   }
 
-  packagingLabel(packaging: 'can' | 'box' | 'bag' | 'jar' | 'other'): string {
+  packagingLabel(packaging: 'bottle' | 'can' | 'box' | 'bag' | 'jar' | 'package' | 'other'): string {
     return this.t(`packaging_${packaging}`);
   }
 

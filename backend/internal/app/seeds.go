@@ -80,10 +80,12 @@ func seedNames(count int) []string {
 
 func seedPackaging(index int) item.Packaging {
 	packaging := []item.Packaging{
+		item.PackagingBottle,
 		item.PackagingCan,
 		item.PackagingBox,
 		item.PackagingBag,
 		item.PackagingJar,
+		item.PackagingPackage,
 		item.PackagingOther,
 	}
 	return packaging[index%len(packaging)]

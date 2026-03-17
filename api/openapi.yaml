@@ -471,7 +471,7 @@ components:
           enum: [grams, ml, l]
         packaging:
           type: string
-          enum: [can, box, bag, jar, other]
+          enum: [bottle, can, box, bag, jar, package, other]
         picture_key:
           type:
             - string
@@ -675,7 +675,7 @@ components:
           enum: [grams, ml, l]
         packaging:
           type: string
-          enum: [can, box, bag, jar, other]
+          enum: [bottle, can, box, bag, jar, package, other]
         picture_key:
           type:
             - string

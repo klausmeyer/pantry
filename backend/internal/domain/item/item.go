@@ -13,11 +13,13 @@ const (
 type Packaging string
 
 const (
-	PackagingCan   Packaging = "can"
-	PackagingBox   Packaging = "box"
-	PackagingBag   Packaging = "bag"
-	PackagingJar   Packaging = "jar"
-	PackagingOther Packaging = "other"
+	PackagingBottle  Packaging = "bottle"
+	PackagingCan     Packaging = "can"
+	PackagingBox     Packaging = "box"
+	PackagingBag     Packaging = "bag"
+	PackagingJar     Packaging = "jar"
+	PackagingPackage Packaging = "package"
+	PackagingOther   Packaging = "other"
 )
 
 type Item struct {

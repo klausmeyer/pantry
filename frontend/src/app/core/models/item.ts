@@ -1,5 +1,5 @@
 export type ContentUnit = 'grams' | 'ml' | 'l';
-export type Packaging = 'can' | 'box' | 'bag' | 'jar' | 'other';
+export type Packaging = 'bottle' | 'can' | 'box' | 'bag' | 'jar' | 'package' | 'other';
 
 export interface Item {
   id: string;

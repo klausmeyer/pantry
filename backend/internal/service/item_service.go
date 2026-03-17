@@ -111,9 +111,9 @@ func validateCreateOrUpdateInput(input CreateItemInput) error {
 		return errors.New("content_unit is required")
 	}
 	switch input.Packaging {
-	case item.PackagingCan, item.PackagingBox, item.PackagingBag, item.PackagingJar, item.PackagingOther:
+	case item.PackagingBottle, item.PackagingCan, item.PackagingBox, item.PackagingBag, item.PackagingJar, item.PackagingPackage, item.PackagingOther:
 	default:
-		return errors.New("packaging must be one of can, box, bag, jar, other")
+		return errors.New("packaging must be one of bottle, can, box, bag, jar, package, other")
 	}
 	return nil
 }
