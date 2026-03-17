@@ -80,7 +80,7 @@
 </section>
 
 <div class="modal" [class.modal-open]="showCreateModal">
-  <div class="modal-box max-w-3xl">
+  <div class="modal-box box-border w-full max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto overscroll-contain">
     <h2 class="card-title mb-3">{{ t('addItemTitle') }}</h2>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <label class="form-control">
@@ -274,7 +274,7 @@
 </section>
 
 <div class="modal" [class.modal-open]="showEditModal">
-  <div class="modal-box max-w-3xl">
+  <div class="modal-box box-border w-full max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto overscroll-contain">
     <h2 class="card-title mb-3">{{ t('editItemTitle') }}</h2>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <label class="form-control">
@@ -380,7 +380,7 @@
 </div>
 
 <div class="modal" [class.modal-open]="showPreviewModal">
-  <div class="modal-box w-11/12 max-w-lg">
+  <div class="modal-box box-border w-full max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[85vh] overflow-y-auto overscroll-contain">
     <h3 class="font-bold text-lg">{{ t('previewTitle') }}</h3>
     <p class="text-sm opacity-70" *ngIf="previewItemName">{{ previewItemName }}</p>
 

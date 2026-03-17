@@ -228,6 +228,7 @@ export class ItemsPageComponent {
     this.previewUrl = null;
     this.previewLoading = true;
     this.showPreviewModal = true;
+    this.updateModalScrollLock();
 
     if (!item.pictureKey) {
       this.previewLoading = false;
@@ -252,6 +253,7 @@ export class ItemsPageComponent {
       return;
     }
     this.showPreviewModal = false;
+    this.updateModalScrollLock();
     this.previewUrl = null;
     this.previewItemName = '';
     this.previewError = '';
@@ -281,6 +283,7 @@ export class ItemsPageComponent {
       .subscribe({
         next: () => {
           this.showCreateModal = false;
+          this.updateModalScrollLock();
           this.newItemPictureFile = null;
           this.clearNewPreview();
           this.newItem = {
@@ -315,6 +318,7 @@ export class ItemsPageComponent {
       comment: item.comment ?? ''
     };
     this.showEditModal = true;
+    this.updateModalScrollLock();
     this.loadEditPreview();
   }
 
@@ -325,6 +329,7 @@ export class ItemsPageComponent {
     this.editItemPictureFile = null;
     this.clearEditPreview();
     this.showEditModal = false;
+    this.updateModalScrollLock();
   }
 
   updateItem(): void {
@@ -350,6 +355,7 @@ export class ItemsPageComponent {
       .subscribe({
         next: () => {
           this.showEditModal = false;
+          this.updateModalScrollLock();
           this.editItemPictureFile = null;
           this.clearEditPreview();
           this.loadItems();
@@ -363,6 +369,7 @@ export class ItemsPageComponent {
   openCreateModal(): void {
     this.createError = '';
     this.showCreateModal = true;
+    this.updateModalScrollLock();
   }
 
   closeCreateModal(): void {
@@ -372,6 +379,7 @@ export class ItemsPageComponent {
     this.newItemPictureFile = null;
     this.clearNewPreview();
     this.showCreateModal = false;
+    this.updateModalScrollLock();
   }
 
   onNewPictureSelected(event: Event): void {
@@ -538,6 +546,21 @@ export class ItemsPageComponent {
       return this.t('daySingular');
     }
     return this.t('dayPlural');
+  }
+
+  private updateModalScrollLock(): void {
+    const anyOpen = this.showCreateModal || this.showEditModal || this.showPreviewModal;
+    const body = this.document.body;
+    const html = this.document.documentElement;
+
+    if (anyOpen) {
+      body.classList.add('modal-open', 'overflow-hidden');
+      html.classList.add('overflow-hidden');
+      return;
+    }
+
+    body.classList.remove('modal-open', 'overflow-hidden');
+    html.classList.remove('overflow-hidden');
   }
 
   private readLocaleFromCookie(): Locale {
