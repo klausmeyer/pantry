@@ -25,14 +25,23 @@ const (
 )
 
 type ListItemsInput struct {
-	Sort   []SortField
-	Search string
+	Sort        []SortField
+	Search      string
+	ImageFilter ImageFilter
 }
 
 type SortField struct {
 	By    ItemSortBy
 	Order SortOrder
 }
+
+type ImageFilter string
+
+const (
+	ImageFilterAll     ImageFilter = "all"
+	ImageFilterWith    ImageFilter = "with"
+	ImageFilterWithout ImageFilter = "without"
+)
 
 type ItemRepository interface {
 	Create(ctx context.Context, i item.Item) (item.Item, error)

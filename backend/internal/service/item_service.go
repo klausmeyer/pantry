@@ -29,8 +29,9 @@ type CreateItemInput struct {
 }
 
 type ListItemsInput struct {
-	Sort   []repository.SortField
-	Search string
+	Sort        []repository.SortField
+	Search      string
+	ImageFilter repository.ImageFilter
 }
 
 type PictureRemover interface {
@@ -142,9 +143,19 @@ func (s *ItemService) cleanupOldPicture(ctx context.Context, previous, current *
 
 func (s *ItemService) List(ctx context.Context, input ListItemsInput) ([]item.Item, error) {
 	return s.repo.List(ctx, repository.ListItemsInput{
-		Sort:   normalizeSort(input.Sort),
-		Search: strings.TrimSpace(input.Search),
+		Sort:        normalizeSort(input.Sort),
+		Search:      strings.TrimSpace(input.Search),
+		ImageFilter: normalizeImageFilter(input.ImageFilter),
 	})
+}
+
+func normalizeImageFilter(filter repository.ImageFilter) repository.ImageFilter {
+	switch filter {
+	case repository.ImageFilterWith, repository.ImageFilterWithout:
+		return filter
+	default:
+		return repository.ImageFilterAll
+	}
 }
 
 func (s *ItemService) SoftDelete(ctx context.Context, id string) error {

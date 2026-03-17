@@ -16,7 +16,8 @@ import (
 const itemType = "items"
 
 var (
-	errInvalidSort = errors.New("sort must use fields id, name, best_before, created_at, updated_at (prefix with '-' for desc)")
+	errInvalidSort       = errors.New("sort must use fields id, name, best_before, created_at, updated_at (prefix with '-' for desc)")
+	errInvalidImageFilter = errors.New("filter[has_image] must be true or false")
 )
 
 type ItemsHandler struct {
@@ -91,7 +92,11 @@ func toItemResource(i item.Item) itemResource {
 func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
 	listInput, err := parseListItemsInput(r)
 	if err != nil {
-		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid sorting", err.Error())
+		title := "invalid sorting"
+		if errors.Is(err, errInvalidImageFilter) {
+			title = "invalid filtering"
+		}
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, title, err.Error())
 		return
 	}
 
@@ -111,13 +116,26 @@ func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
 	search := strings.TrimSpace(r.URL.Query().Get("q"))
+	imageRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("filter[has_image]")))
+	imageFilter := repository.ImageFilterAll
+	if imageRaw != "" {
+		switch imageRaw {
+		case "true":
+			imageFilter = repository.ImageFilterWith
+		case "false":
+			imageFilter = repository.ImageFilterWithout
+		default:
+			return service.ListItemsInput{}, errInvalidImageFilter
+		}
+	}
 	sortRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("sort")))
 	if sortRaw == "" {
 		return service.ListItemsInput{
 			Sort: []repository.SortField{
 				{By: repository.ItemSortByID, Order: repository.SortOrderAsc},
 			},
-			Search: search,
+			Search:      search,
+			ImageFilter: imageFilter,
 		}, nil
 	}
 
@@ -154,7 +172,7 @@ func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
 		sort = append(sort, repository.SortField{By: by, Order: order})
 	}
 
-	return service.ListItemsInput{Sort: sort, Search: search}, nil
+	return service.ListItemsInput{Sort: sort, Search: search, ImageFilter: imageFilter}, nil
 }
 
 func (h *ItemsHandler) Create(w http.ResponseWriter, r *http.Request) {

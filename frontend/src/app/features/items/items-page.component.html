@@ -68,6 +68,20 @@
         <option value="updated_at">{{ t('sortUpdatedAt') }}</option>
       </select>
     </label>
+    <label class="form-control w-44">
+      <div class="label py-1">
+        <span class="label-text">{{ t('filter') }}</span>
+      </div>
+      <select
+        class="select select-bordered select-sm"
+        [value]="activeFilter"
+        (change)="onFilterChange($any($event.target).value)"
+      >
+        <option value="all">{{ t('filterAll') }}</option>
+        <option value="has_image:true">{{ t('filterHasImage') }}</option>
+        <option value="has_image:false">{{ t('filterNoImage') }}</option>
+      </select>
+    </label>
     <div class="form-control w-auto self-end">
       <div class="label py-1">
         <span class="label-text invisible">Order</span>

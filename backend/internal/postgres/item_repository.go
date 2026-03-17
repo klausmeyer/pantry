@@ -243,12 +243,24 @@ WHERE id = $1 AND deleted_at IS NULL;
 }
 
 func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInput) ([]item.Item, error) {
-	where := "deleted_at IS NULL"
+	whereParts := []string{"deleted_at IS NULL"}
 	args := []any{}
+	argPos := 1
+
 	if strings.TrimSpace(input.Search) != "" {
-		where = "deleted_at IS NULL AND search_text LIKE unaccent(lower($1))"
+		whereParts = append(whereParts, fmt.Sprintf("search_text LIKE unaccent(lower($%d))", argPos))
 		args = append(args, "%"+strings.TrimSpace(input.Search)+"%")
+		argPos++
 	}
+
+	switch input.ImageFilter {
+	case repository.ImageFilterWith:
+		whereParts = append(whereParts, "picture_key IS NOT NULL")
+	case repository.ImageFilterWithout:
+		whereParts = append(whereParts, "picture_key IS NULL")
+	}
+
+	where := strings.Join(whereParts, " AND ")
 
 	orderBy := make([]string, 0, len(input.Sort)+1)
 	for _, sortField := range input.Sort {

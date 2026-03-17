@@ -23,6 +23,7 @@ export class ItemsPageComponent {
   sortBy: ItemSortBy = 'best_before';
   sortOrder: SortOrder = 'asc';
   searchTerm = '';
+  activeFilter: FilterValue = 'all';
   deletingIds = new Set<string>();
   createLoading = false;
   createError = '';
@@ -65,6 +66,10 @@ export class ItemsPageComponent {
       sortBy: 'Sort by',
       search: 'Search',
       searchPlaceholder: 'Search items',
+      filter: 'Filter',
+      filterAll: 'All items',
+      filterHasImage: 'With image',
+      filterNoImage: 'No image',
       clearSearch: 'Clear',
       sortName: 'Name',
       sortBestBefore: 'EXP',
@@ -119,6 +124,10 @@ export class ItemsPageComponent {
       sortBy: 'Sortieren nach',
       search: 'Suche',
       searchPlaceholder: 'Artikel suchen',
+      filter: 'Filter',
+      filterAll: 'Alle Artikel',
+      filterHasImage: 'Mit Bild',
+      filterNoImage: 'Ohne Bild',
       clearSearch: 'Leeren',
       sortName: 'Name',
       sortBestBefore: 'MHD',
@@ -183,6 +192,11 @@ export class ItemsPageComponent {
 
   onSearchChange(term: string): void {
     this.searchTerm = term;
+    this.loadItems();
+  }
+
+  onFilterChange(filter: string): void {
+    this.activeFilter = filter as FilterValue;
     this.loadItems();
   }
 
@@ -408,7 +422,7 @@ export class ItemsPageComponent {
     this.error = '';
 
     this.api
-      .list(this.sortBy, this.sortOrder, this.searchTerm)
+      .list(this.sortBy, this.sortOrder, this.searchTerm, this.buildFilters())
       .pipe(
         catchError((_err: unknown) => {
           this.error = this.t('failedLoad');
@@ -548,6 +562,17 @@ export class ItemsPageComponent {
     return this.t('dayPlural');
   }
 
+  private buildFilters(): { hasImage?: boolean } {
+    if (this.activeFilter === 'has_image:true') {
+      return { hasImage: true };
+    }
+    if (this.activeFilter === 'has_image:false') {
+      return { hasImage: false };
+    }
+    return {};
+  }
+
+
   private updateModalScrollLock(): void {
     const anyOpen = this.showCreateModal || this.showEditModal || this.showPreviewModal;
     const body = this.document.body;
@@ -589,3 +614,4 @@ export class ItemsPageComponent {
 }
 
 type Locale = 'en' | 'de';
+type FilterValue = 'all' | 'has_image:true' | 'has_image:false';

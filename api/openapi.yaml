@@ -53,6 +53,15 @@ paths:
             Example: `q=rice`
           schema:
             type: string
+        - in: query
+          name: filter[has_image]
+          required: false
+          description: |
+            Filter items by whether they have a picture.
+            Example: `filter[has_image]=true`
+          schema:
+            type: string
+            enum: [true, false]
       responses:
         '200':
           description: List of items

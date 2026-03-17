@@ -15,12 +15,20 @@ export class ItemsApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = this.resolveBaseUrl();
 
-  list(sortBy: ItemSortBy, sortOrder: SortOrder, search?: string): Observable<Item[]> {
+  list(
+    sortBy: ItemSortBy,
+    sortOrder: SortOrder,
+    search?: string,
+    filters?: { hasImage?: boolean }
+  ): Observable<Item[]> {
     const sort = sortOrder === 'desc' ? `-${sortBy}` : sortBy;
     const trimmedSearch = search?.trim() ?? '';
     const params: Record<string, string> = { sort };
     if (trimmedSearch) {
       params['q'] = trimmedSearch;
+    }
+    if (filters?.hasImage !== undefined) {
+      params['filter[has_image]'] = filters.hasImage ? 'true' : 'false';
     }
 
     return this.http
