@@ -34,6 +34,7 @@ export class ItemsPageComponent {
   editLoading = false;
   editError = '';
   editingItemId = '';
+  addMoreOnCreate = false;
   newItemPictureFile: File | null = null;
   editItemPictureFile: File | null = null;
   newItemPreviewUrl: string | null = null;
@@ -110,6 +111,7 @@ export class ItemsPageComponent {
       duplicate: 'Duplicate',
       edit: 'Edit',
       delete: 'Delete',
+      addMore: 'Add more',
       expiresToday: 'expires today',
       overdueSuffix: 'overdue',
       daysLeftSuffix: 'left',
@@ -174,6 +176,7 @@ export class ItemsPageComponent {
       duplicate: 'Duplizieren',
       edit: 'Bearbeiten',
       delete: 'Löschen',
+      addMore: 'Mehr hinzufügen',
       expiresToday: 'läuft heute ab',
       overdueSuffix: 'abgelaufen',
       daysLeftSuffix: 'verbleibend',
@@ -350,19 +353,22 @@ export class ItemsPageComponent {
       )
       .subscribe({
         next: () => {
-          this.showCreateModal = false;
-          this.updateModalScrollLock();
-          this.newItemPictureFile = null;
-          this.clearNewPreview();
-          this.newItem = {
-            name: '',
-            bestBefore: '',
-            contentAmount: 1,
-            contentUnit: this.newItem.contentUnit,
-            packaging: this.newItem.packaging,
-            pictureKey: null,
-            comment: ''
-          };
+          if (!this.addMoreOnCreate) {
+            this.showCreateModal = false;
+            this.updateModalScrollLock();
+            this.newItemPictureFile = null;
+            this.clearNewPreview();
+            this.newItem = {
+              name: '',
+              bestBefore: '',
+              contentAmount: 1,
+              contentUnit: this.newItem.contentUnit,
+              packaging: this.newItem.packaging,
+              pictureKey: null,
+              comment: ''
+            };
+            this.addMoreOnCreate = false;
+          }
           this.loadItems();
         },
         error: () => {
@@ -448,6 +454,7 @@ export class ItemsPageComponent {
     this.clearNewPreview();
     this.showCreateModal = false;
     this.updateModalScrollLock();
+    this.addMoreOnCreate = false;
   }
 
   onNewPictureSelected(event: Event): void {

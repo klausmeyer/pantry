@@ -168,6 +168,11 @@
       <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
     </label>
 
+    <label class="label cursor-pointer justify-start gap-2 mt-2">
+      <input class="checkbox checkbox-sm" type="checkbox" [(ngModel)]="addMoreOnCreate" name="addMoreOnCreate" />
+      <span class="label-text">{{ t('addMore') }}</span>
+    </label>
+
     <div class="alert alert-error mt-4" *ngIf="createError">
       <span>{{ createError }}</span>
     </div>
