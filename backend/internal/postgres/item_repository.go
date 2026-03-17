@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS items (
   deleted_at TIMESTAMPTZ
 );
 
+DROP TRIGGER IF EXISTS items_search_text_trigger ON items;
 CREATE TRIGGER items_search_text_trigger
 BEFORE INSERT OR UPDATE OF name, comment ON items
 FOR EACH ROW
