@@ -47,6 +47,19 @@ type uploadPreviewResponse struct {
 	} `json:"data"`
 }
 
+type cloneRequest struct {
+	PictureKey string `json:"picture_key"`
+}
+
+type cloneResponse struct {
+	Data struct {
+		Type       string `json:"type"`
+		Attributes struct {
+			PictureKey string `json:"picture_key"`
+		} `json:"attributes"`
+	} `json:"data"`
+}
+
 var allowedImageTypes = map[string]string{
 	"image/jpeg": ".jpg",
 	"image/jpg":  ".jpg",
@@ -137,6 +150,43 @@ func (h *UploadsHandler) Preview(w http.ResponseWriter, r *http.Request) {
 	resp.Data.Attributes.PreviewURL = previewURL
 
 	httputil.WriteJSONAPI(w, http.StatusOK, resp)
+}
+
+func (h *UploadsHandler) Clone(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	if !isJSONRequest(r.Header.Get("Content-Type")) {
+		httputil.WriteJSONAPIError(w, http.StatusUnsupportedMediaType, "unsupported media type", "content-type must be application/json")
+		return
+	}
+
+	var req cloneRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid request", "request body must be valid JSON")
+		return
+	}
+
+	sourceKey := strings.TrimSpace(req.PictureKey)
+	if sourceKey == "" {
+		httputil.WriteJSONAPIError(w, http.StatusBadRequest, "invalid picture_key", "picture_key is required")
+		return
+	}
+
+	ext := strings.ToLower(filepath.Ext(sourceKey))
+	destKey := "items/" + h.ids.New() + ext
+	if err := h.presigner.Copy(r.Context(), sourceKey, destKey); err != nil {
+		httputil.WriteJSONAPIError(w, http.StatusInternalServerError, "clone error", "could not clone image")
+		return
+	}
+
+	var resp cloneResponse
+	resp.Data.Type = "uploads"
+	resp.Data.Attributes.PictureKey = destKey
+
+	httputil.WriteJSONAPI(w, http.StatusCreated, resp)
 }
 
 func isJSONRequest(contentType string) bool {

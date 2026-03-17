@@ -232,6 +232,28 @@
             </svg>
           </button>
           <button
+            class="btn btn-xs btn-circle btn-ghost text-success"
+            type="button"
+            [disabled]="duplicatingIds.has(item.id)"
+            (click)="duplicateItem(item)"
+            [attr.aria-label]="'Duplicate ' + item.name"
+            [attr.title]="t('duplicate')"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M8 8h8v8H8z" />
+              <path d="M4 4h8v4" />
+              <path d="M16 12h4v8h-8v-4" />
+            </svg>
+          </button>
+          <button
             class="btn btn-xs btn-circle btn-ghost text-info"
             type="button"
             [disabled]="deletingIds.has(item.id)"

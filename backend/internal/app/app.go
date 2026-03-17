@@ -64,6 +64,7 @@ func New(cfg config.Config) (*App, error) {
 	mux.HandleFunc("PATCH /api/items/{id}", itemsHandler.Update)
 	mux.HandleFunc("DELETE /api/items/{id}", itemsHandler.Delete)
 	mux.HandleFunc("POST /api/uploads", uploadsHandler.Create)
+	mux.HandleFunc("POST /api/uploads/clone", uploadsHandler.Clone)
 	mux.HandleFunc("GET /api/uploads/preview", uploadsHandler.Preview)
 
 	log.Printf("db configured for %s:%d/%s", cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)

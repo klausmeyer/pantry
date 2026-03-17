@@ -25,6 +25,7 @@ export class ItemsPageComponent {
   searchTerm = '';
   activeFilter: FilterValue = 'all';
   deletingIds = new Set<string>();
+  duplicatingIds = new Set<string>();
   createLoading = false;
   createError = '';
   showCreateModal = false;
@@ -91,6 +92,9 @@ export class ItemsPageComponent {
       saveChanges: 'Save changes',
       loadingItems: 'Loading items...',
       failedDelete: 'Failed to delete item.',
+      failedDuplicate: 'Failed to duplicate item.',
+      duplicateConfirm: 'Duplicate this item?',
+      duplicateConfirmName: 'Duplicate "{name}"?',
       failedCreate: 'Failed to create item.',
       failedUpdate: 'Failed to update item.',
       failedLoad: 'Failed to load items from the API.',
@@ -103,6 +107,7 @@ export class ItemsPageComponent {
       previewMissing: 'No picture uploaded yet.',
       previewFailed: 'Failed to load preview.',
       removePicture: 'Remove picture',
+      duplicate: 'Duplicate',
       edit: 'Edit',
       delete: 'Delete',
       expiresToday: 'expires today',
@@ -151,6 +156,9 @@ export class ItemsPageComponent {
       saveChanges: 'Änderungen speichern',
       loadingItems: 'Lade Artikel...',
       failedDelete: 'Artikel konnte nicht gelöscht werden.',
+      failedDuplicate: 'Artikel konnte nicht dupliziert werden.',
+      duplicateConfirm: 'Diesen Artikel duplizieren?',
+      duplicateConfirmName: 'Artikel "{name}" duplizieren?',
       failedCreate: 'Artikel konnte nicht erstellt werden.',
       failedUpdate: 'Artikel konnte nicht aktualisiert werden.',
       failedLoad: 'Artikel konnten nicht geladen werden.',
@@ -163,6 +171,7 @@ export class ItemsPageComponent {
       previewMissing: 'Noch kein Bild hochgeladen.',
       previewFailed: 'Vorschau konnte nicht geladen werden.',
       removePicture: 'Bild entfernen',
+      duplicate: 'Duplizieren',
       edit: 'Bearbeiten',
       delete: 'Löschen',
       expiresToday: 'läuft heute ab',
@@ -238,6 +247,47 @@ export class ItemsPageComponent {
         this.error = this.t('failedDelete');
       }
     });
+  }
+
+  duplicateItem(item: Item): void {
+    if (!item?.id || this.duplicatingIds.has(item.id)) {
+      return;
+    }
+
+    const label = item.name?.trim() ? this.t('duplicateConfirmName').replace('{name}', item.name.trim()) : this.t('duplicateConfirm');
+    const confirmed = window.confirm(label);
+    if (!confirmed) {
+      return;
+    }
+
+    this.duplicatingIds.add(item.id);
+    const clone$: Observable<string | null> = item.pictureKey ? this.api.clonePicture(item.pictureKey) : of(null);
+
+    clone$
+      .pipe(
+        switchMap((pictureKey) => {
+          const payload: CreateItemInput = {
+            name: item.name,
+            bestBefore: item.bestBefore,
+            contentAmount: item.contentAmount,
+            contentUnit: item.contentUnit,
+            packaging: item.packaging,
+            pictureKey,
+            comment: item.comment ?? ''
+          };
+          return this.api.create(payload);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.duplicatingIds.delete(item.id);
+          this.loadItems();
+        },
+        error: () => {
+          this.duplicatingIds.delete(item.id);
+          this.error = this.t('failedDuplicate');
+        }
+      });
   }
 
   openPreviewModal(item: Item): void {

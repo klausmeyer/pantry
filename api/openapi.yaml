@@ -269,6 +269,64 @@ paths:
                   - status: '500'
                     title: upload error
                     detail: could not create upload URL
+  /api/uploads/clone:
+    post:
+      tags: [Uploads]
+      summary: Clone an existing item picture to a new key
+      operationId: cloneUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadCloneRequest'
+            example:
+              picture_key: items/01957a1a-8c2f-7b1d-9b2f-2f5e7b9a0f91.png
+      responses:
+        '201':
+          description: New picture key for the cloned image
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/UploadCloneResponseDocument'
+              example:
+                data:
+                  type: uploads
+                  attributes:
+                    picture_key: items/01957a1b-5bb3-79aa-8b0e-0f2f3a9bca11.png
+        '400':
+          description: Invalid clone request
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '400'
+                    title: invalid picture_key
+                    detail: picture_key is required
+        '415':
+          description: Unsupported media type
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '415'
+                    title: unsupported media type
+                    detail: content-type must be application/json
+        '500':
+          description: Internal error
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDocument'
+              example:
+                errors:
+                  - status: '500'
+                    title: clone error
+                    detail: could not clone image
   /api/uploads/preview:
     get:
       tags: [Uploads]
@@ -505,6 +563,14 @@ components:
           type: string
       required: [filename, content_type]
 
+    UploadCloneRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        picture_key:
+          type: string
+      required: [picture_key]
+
     UploadAttributes:
       type: object
       additionalProperties: false
@@ -519,6 +585,30 @@ components:
           additionalProperties:
             type: string
       required: [picture_key, upload_url, headers]
+
+    UploadCloneAttributes:
+      type: object
+      additionalProperties: false
+      properties:
+        picture_key:
+          type: string
+      required: [picture_key]
+
+    UploadCloneResponseDocument:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum: [uploads]
+            attributes:
+              $ref: '#/components/schemas/UploadCloneAttributes'
+          required: [type, attributes]
+      required: [data]
 
     UploadPreviewAttributes:
       type: object

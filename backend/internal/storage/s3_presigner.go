@@ -2,12 +2,14 @@ package storage
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	internalconfig "github.com/klausmeyer/pantry/backend/internal/config"
 )
 
@@ -88,6 +90,17 @@ func (p *S3Presigner) Delete(ctx context.Context, key string) error {
 	_, err := p.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(p.bucket),
 		Key:    aws.String(key),
+	})
+	return err
+}
+
+func (p *S3Presigner) Copy(ctx context.Context, sourceKey, destKey string) error {
+	copySource := url.PathEscape(p.bucket + "/" + sourceKey)
+	_, err := p.client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:            aws.String(p.bucket),
+		Key:               aws.String(destKey),
+		CopySource:        aws.String(copySource),
+		MetadataDirective: types.MetadataDirectiveCopy,
 	})
 	return err
 }

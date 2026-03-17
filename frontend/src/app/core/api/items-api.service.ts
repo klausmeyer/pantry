@@ -123,6 +123,21 @@ export class ItemsApiService {
     );
   }
 
+  clonePicture(pictureKey: string): Observable<string> {
+    return this.http
+      .post<UploadCloneResponse>(
+        `${this.baseUrl}/uploads/clone`,
+        { picture_key: pictureKey },
+        {
+          headers: {
+            Accept: 'application/vnd.api+json',
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      .pipe(map((response) => response.data.attributes.picture_key));
+  }
+
   getPicturePreviewUrl(pictureKey: string): Observable<string> {
     return this.http
       .get<UploadPreviewResponse>(`${this.baseUrl}/uploads/preview`, {
@@ -271,6 +286,15 @@ export class ItemsApiService {
       img.src = url;
     });
   }
+}
+
+interface UploadCloneResponse {
+  data: {
+    type: 'uploads';
+    attributes: {
+      picture_key: string;
+    };
+  };
 }
 
 type UploadResponse = {
