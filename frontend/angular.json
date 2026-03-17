@@ -24,6 +24,16 @@
                 "glob": "**/*",
                 "input": "public",
                 "output": "/"
+              },
+              {
+                "glob": "oidc-config.js",
+                "input": "src",
+                "output": "/"
+              },
+              {
+                "glob": "oidc-config.js.tpl",
+                "input": "src",
+                "output": "/"
               }
             ],
             "styles": [

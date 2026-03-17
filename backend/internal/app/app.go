@@ -10,6 +10,7 @@ import (
 
 	"github.com/klausmeyer/pantry/backend/internal/config"
 	"github.com/klausmeyer/pantry/backend/internal/http/handler"
+	"github.com/klausmeyer/pantry/backend/internal/http/middleware"
 	"github.com/klausmeyer/pantry/backend/internal/id"
 	"github.com/klausmeyer/pantry/backend/internal/postgres"
 	"github.com/klausmeyer/pantry/backend/internal/service"
@@ -70,7 +71,19 @@ func New(cfg config.Config) (*App, error) {
 	log.Printf("db configured for %s:%d/%s", cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)
 	log.Printf("s3 configured for %s bucket=%s", cfg.S3.Endpoint, cfg.S3.Bucket)
 
-	return &App{cfg: cfg, router: withCORS(mux), db: db}, nil
+	router := http.Handler(mux)
+	authCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	verifier, err := middleware.NewOIDCVerifier(authCtx, cfg.OIDC)
+	if err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("init oidc verifier: %w", err)
+	}
+	router = middleware.RequireAuth(verifier, router)
+	log.Printf("oidc enabled (issuer=%s)", cfg.OIDC.Issuer)
+
+	return &App{cfg: cfg, router: withCORS(router), db: db}, nil
 }
 
 func (a *App) Router() http.Handler {
@@ -88,7 +101,7 @@ func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
 		w.Header().Set("Vary", "Origin, Access-Control-Request-Method, Access-Control-Request-Headers")
 
 		if r.Method == http.MethodOptions {

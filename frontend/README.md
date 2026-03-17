@@ -11,3 +11,11 @@ npm start
 ```
 
 The app expects the backend API on `http://localhost:4000`.
+
+## OIDC Configuration
+
+The frontend reads OIDC settings from `oidc-config.js`, which is loaded by `src/index.html`.
+
+- Docker builds generate `oidc-config.js` from `OIDC_*` environment variables.
+- For local dev with `npm start`, create `frontend/src/oidc-config.js` and set `window.__PANTRY_OIDC__` overrides (you can copy `frontend/src/oidc-config.js.tpl` or `oidc-config.js.template` and fill in your values).
+- Set `OIDC_ENABLED=false` to disable authentication in the UI.

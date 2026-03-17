@@ -2,3 +2,5 @@ node_modules/
 dist/
 coverage/
 .angular/
+src/oidc-config.js
+.env

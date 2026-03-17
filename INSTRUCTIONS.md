@@ -9,12 +9,18 @@ The application consists of:
 - An API specification written in OAS3
 - A backend written in Go providing an API (following the [JSON:API](https://jsonapi.org) standard) for records stored inside a PostgreSQL database and files in an S3 bucket
 - A frontend written in Angular for browsing and managing entries via the API
+- OIDC-based authentication with bearer token validation on the backend and OIDC login in the frontend
 
 ## Project Structure
 
 - `./api` contains the api specification
 - `./backend` contains the backend part of the application
 - `./frontend` contains the frontend part of the application
+
+## Authentication
+
+- The backend validates bearer tokens against the configured OIDC issuer (`OIDC_ISSUER`).
+- The frontend reads OIDC settings from `oidc-config.js` or `OIDC_*` environment variables when running in Docker.
 
 ## Data Model
 

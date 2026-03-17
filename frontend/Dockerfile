@@ -20,5 +20,7 @@ ENV NGINX_ENVSUBST_FILTER=BACKEND_UPSTREAM
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /tmp/frontend-dist/ /usr/share/nginx/html/
 
+COPY docker/40-envsubst-oidc-config.sh /docker-entrypoint.d/40-envsubst-oidc-config.sh
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

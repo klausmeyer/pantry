@@ -4,6 +4,8 @@ import { Observable, catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
 import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/auth/auth.service';
+import type { User } from 'oidc-client-ts';
 
 @Component({
   selector: 'app-items-page',
@@ -14,6 +16,9 @@ import { FormsModule } from '@angular/forms';
 export class ItemsPageComponent {
   private readonly api = inject(ItemsApiService);
   private readonly document = inject(DOCUMENT);
+  private readonly auth = inject(AuthService);
+
+  readonly user$: Observable<User | null> = this.auth.user$;
 
   locale: Locale = 'en';
 
@@ -112,6 +117,7 @@ export class ItemsPageComponent {
       edit: 'Edit',
       delete: 'Delete',
       addMore: 'Add more',
+      logout: 'Logout',
       expiresToday: 'expires today',
       overdueSuffix: 'overdue',
       daysLeftSuffix: 'left',
@@ -177,6 +183,7 @@ export class ItemsPageComponent {
       edit: 'Bearbeiten',
       delete: 'Löschen',
       addMore: 'Mehr hinzufügen',
+      logout: 'Abmelden',
       expiresToday: 'läuft heute ab',
       overdueSuffix: 'abgelaufen',
       daysLeftSuffix: 'verbleibend',
@@ -610,6 +617,42 @@ export class ItemsPageComponent {
 
   packagingLabel(packaging: 'bottle' | 'can' | 'box' | 'bag' | 'jar' | 'package' | 'other'): string {
     return this.t(`packaging_${packaging}`);
+  }
+
+  jwtUsername(user: User | null): string {
+    const token = user?.access_token;
+    if (!token) {
+      return '';
+    }
+    const parts = token.split('.');
+    if (parts.length < 2) {
+      return '';
+    }
+    try {
+      const payload = JSON.parse(this.decodeBase64Url(parts[1])) as Record<string, unknown>;
+      const name =
+        payload['preferred_username'] ??
+        payload['username'] ??
+        payload['name'] ??
+        payload['email'] ??
+        payload['sub'];
+      return typeof name === 'string' ? name : '';
+    } catch {
+      return '';
+    }
+  }
+
+  logout(): void {
+    this.auth.logout();
+  }
+
+  private decodeBase64Url(input: string): string {
+    const padded = input.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(input.length / 4) * 4, '=');
+    return decodeURIComponent(
+      Array.from(atob(padded))
+        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join('')
+    );
   }
 
   private startOfUTCDate(date: Date): Date {

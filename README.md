@@ -46,6 +46,16 @@ docker compose down
 
 The frontend container proxies `/api/*` and `/healthz` to the backend container.
 
+## OIDC Authentication
+
+The stack now uses OIDC for authentication.
+
+- Backend requires a valid OIDC issuer and validates bearer tokens for API routes.
+- Frontend reads OIDC settings from `oidc-config.js`, which is generated from `OIDC_*` environment variables in Docker.
+- `docker-compose.yml` includes a local Keycloak instance and wires both services to the `http://localhost:8081/realms/test` issuer.
+
+If you use a different identity provider, update `OIDC_ISSUER` on the backend and the `OIDC_*` variables for the frontend.
+
 ## Kubernetes Deployment
 
 For Kubernetes installs, use the Helm chart in [`misc/helm/pantry`](misc/helm/pantry).

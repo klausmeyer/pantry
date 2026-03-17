@@ -26,6 +26,7 @@ Set these values for your environment:
 - `backend.env.S3_REGION`
 - `backend.env.S3_BUCKET`
 - `backend.env.S3_USE_PATH_STYLE`
+- `backend.env.OIDC_ISSUER`
 
 ## Credentials With Sealed Secrets
 
@@ -64,6 +65,17 @@ By default, frontend proxies API requests to the backend service in the same rel
 Override with:
 
 - `frontend.backendUpstream`
+
+## OIDC Configuration
+
+Set frontend OIDC environment variables under `frontend.env`, for example:
+
+- `frontend.env.OIDC_ENABLED`
+- `frontend.env.OIDC_ISSUER`
+- `frontend.env.OIDC_CLIENT_ID`
+- `frontend.env.OIDC_REDIRECT_URI`
+- `frontend.env.OIDC_POST_LOGOUT_REDIRECT_URI`
+- `frontend.env.OIDC_SCOPE`
 
 ## Ingress
 

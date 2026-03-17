@@ -12,6 +12,7 @@ type Config struct {
 	DB       DBConfig
 	S3       S3Config
 	Seed     SeedConfig
+	OIDC     OIDCConfig
 }
 
 type DBConfig struct {
@@ -37,6 +38,12 @@ type SeedConfig struct {
 	DevDataCount int
 }
 
+type OIDCConfig struct {
+	Issuer   string
+	ClientID string
+	Audience string
+}
+
 func Load() (Config, error) {
 	cfg := Config{
 		HTTPAddr: getenv("HTTP_ADDR", ":4000"),
@@ -60,6 +67,9 @@ func Load() (Config, error) {
 			DevData:      getenvBool("SEED_DEV_DATA", false),
 			DevDataCount: getenvInt("SEED_DEV_DATA_COUNT", 100),
 		},
+		OIDC: OIDCConfig{
+			Issuer: getenv("OIDC_ISSUER", "https://example.com"),
+		},
 	}
 
 	if cfg.HTTPAddr == "" {
@@ -70,6 +80,9 @@ func Load() (Config, error) {
 	}
 	if cfg.Seed.DevDataCount <= 0 {
 		return Config{}, fmt.Errorf("SEED_DEV_DATA_COUNT must be positive, got %d", cfg.Seed.DevDataCount)
+	}
+	if cfg.OIDC.Issuer == "" {
+		return Config{}, errors.New("OIDC_ISSUER must not be empty")
 	}
 
 	return cfg, nil

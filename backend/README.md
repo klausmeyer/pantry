@@ -37,6 +37,14 @@ make run
 curl http://localhost:4000/healthz
 ```
 
+## OIDC Authentication
+
+The backend now validates bearer tokens using an OIDC issuer.
+
+- Configure the issuer with `OIDC_ISSUER`.
+- All API routes require a bearer token; `/healthz` and `OPTIONS` remain public.
+- `docker-compose.yml` provisions a local Keycloak instance and sets `OIDC_ISSUER` to `http://localhost:8081/realms/test`.
+
 ## Development seeds
 
 You can seed dummy data on startup. Seeding runs only if the `items` table is empty.
