@@ -1,6 +1,7 @@
 # Pantry Mobile (Flutter)
 
-This is the Flutter mobile app for Pantry.
+This is the Flutter mobile app for Pantry. It supports OIDC login, item CRUD,
+image uploads, and best-before badges.
 
 ## Requirements
 
@@ -74,6 +75,31 @@ iOS (`mobile/ios/Runner/Info.plist`) add:
 
 If you prefer a different scheme, update both the redirect URI and these entries.
 
+## Features
+
+- OIDC login with token refresh and secure storage.
+- List, create, edit, and delete pantry items.
+- Best-before badge with day countdown.
+- Image upload with presigned URLs and in-app preview.
+
+## Image Uploads
+
+- Images are resized before upload to match the web frontend:
+  - Max dimension: `1600px`
+  - JPEG/WebP quality: `0.85`
+  - PNG stays lossless
+- Supported upload types follow the backend (jpeg/jpg/png/webp/gif).
+
+## iOS Photo Permission
+
+The app uses the photo library picker for image uploads. Ensure the usage
+string is present in `mobile/ios/Runner/Info.plist`:
+
+```xml
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Pantry needs access to your photos to upload item pictures.</string>
+```
+
 ## Token Storage
 
 Access, ID, and refresh tokens are stored with `flutter_secure_storage`, which uses
@@ -81,5 +107,5 @@ Keychain on iOS and the Android Keystore-backed storage on Android.
 
 ## Notes
 
-- This app is intentionally minimal right now and will be expanded as the backend and API stabilize.
-- OIDC authentication will be integrated once the API flows are finalized.
+- If you use a physical device, replace `localhost` with your machine’s LAN IP
+  for the API and OIDC issuer.
