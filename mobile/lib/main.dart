@@ -14,7 +14,7 @@ const String oidcIssuer = String.fromEnvironment(
 );
 const String oidcClientId = String.fromEnvironment(
   'PANTRY_OIDC_CLIENT_ID',
-  defaultValue: 'keycloak',
+  defaultValue: 'pantry',
 );
 const String oidcRedirectUri = String.fromEnvironment(
   'PANTRY_OIDC_REDIRECT_URI',
@@ -188,7 +188,7 @@ class _AuthGate extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'We will open the Keycloak login page and return with an access token.',
+            'We will open the OIDC login page and return with an access token.',
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(

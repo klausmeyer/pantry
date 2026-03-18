@@ -39,7 +39,7 @@ OIDC settings (optional overrides):
 ```bash
 flutter run \
   --dart-define=PANTRY_OIDC_ISSUER=http://localhost:8081/realms/test \
-  --dart-define=PANTRY_OIDC_CLIENT_ID=keycloak \
+  --dart-define=PANTRY_OIDC_CLIENT_ID=pantry \
   --dart-define=PANTRY_OIDC_REDIRECT_URI=com.pantry.app:/oauthredirect
 ```
 
