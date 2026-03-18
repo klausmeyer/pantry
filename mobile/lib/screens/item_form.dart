@@ -347,126 +347,133 @@ class _ItemFormPageState extends State<ItemFormPage> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: Text(widget.title),
-      ),
-      child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          children: [
-            CupertinoFormSection.insetGrouped(
-              header: const Text('Details'),
-              children: [
-                CupertinoTextFormFieldRow(
-                  controller: _nameController,
-                  placeholder: 'Name',
-                  prefix: _formPrefix('Name'),
-                ),
-                CupertinoTextFormFieldRow(
-                  controller: _bestBeforeController,
-                  placeholder: 'YYYY-MM-DD',
-                  readOnly: true,
-                  prefix: _formPrefix('Best before'),
-                  onTap: _pickBestBeforeDate,
-                ),
-                CupertinoTextFormFieldRow(
-                  controller: _contentAmountController,
-                  placeholder: 'e.g. 250',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  prefix: _formPrefix('Amount'),
-                ),
-                CupertinoFormRow(
-                  prefix: _formPrefix('Unit'),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: CupertinoButton(
-                      padding: const EdgeInsets.only(left: 6),
-                      onPressed: _selectContentUnit,
-                      child: Text(_contentUnit ?? 'Select'),
+      child: CustomScrollView(
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: Text(widget.title),
+          ),
+          SliverSafeArea(
+            top: false,
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const SizedBox(height: 6),
+                CupertinoFormSection.insetGrouped(
+                  header: const Text('Details'),
+                  children: [
+                    CupertinoTextFormFieldRow(
+                      controller: _nameController,
+                      placeholder: 'Name',
+                      prefix: _formPrefix('Name'),
                     ),
-                  ),
-                ),
-                CupertinoFormRow(
-                  prefix: _formPrefix('Packaging'),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: CupertinoButton(
-                      padding: const EdgeInsets.only(left: 6),
-                      onPressed: _selectPackaging,
-                      child: Text(_packaging ?? 'Select'),
+                    CupertinoTextFormFieldRow(
+                      controller: _bestBeforeController,
+                      placeholder: 'YYYY-MM-DD',
+                      readOnly: true,
+                      prefix: _formPrefix('Best before'),
+                      onTap: _pickBestBeforeDate,
                     ),
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(20, 6, 6, 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _formPrefix('Comment'),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: CupertinoTextField(
-                            controller: _commentController,
-                            placeholder: 'Optional',
-                            maxLines: 3,
+                    CupertinoTextFormFieldRow(
+                      controller: _contentAmountController,
+                      placeholder: 'e.g. 250',
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      prefix: _formPrefix('Amount'),
+                    ),
+                    CupertinoFormRow(
+                      prefix: _formPrefix('Unit'),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: CupertinoButton(
+                          padding:
+                              const EdgeInsets.only(left: 6, top: 2, bottom: 2),
+                          onPressed: _selectContentUnit,
+                          child: Text(_contentUnit ?? 'Select'),
+                        ),
+                      ),
+                    ),
+                    CupertinoFormRow(
+                      prefix: _formPrefix('Packaging'),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: CupertinoButton(
+                          padding:
+                              const EdgeInsets.only(left: 6, top: 2, bottom: 2),
+                          onPressed: _selectPackaging,
+                          child: Text(_packaging ?? 'Select'),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 6, 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _formPrefix('Comment'),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: CupertinoTextField(
+                                controller: _commentController,
+                                placeholder: 'Optional',
+                                maxLines: 3,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                CupertinoFormSection.insetGrouped(
+                  header: const Text('Picture'),
+                  children: [
+                    CupertinoFormRow(
+                      prefix: _formPrefix('Image'),
+                      child: Row(
+                        children: [
+                          _ImagePreview(
+                            filePath: _selectedImage?.path,
+                            hasExisting: _pictureKey != null,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _selectedImage != null || _pictureKey != null
+                                  ? 'Selected'
+                                  : 'None',
+                            ),
+                          ),
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: _isSaving ? null : _showImageActions,
+                            child: const Text('Edit'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: CupertinoColors.systemRed),
+                    ),
+                  ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: CupertinoButton.filled(
+                    onPressed: _isSaving ? null : _submit,
+                    child: Text(_isSaving ? 'Saving…' : 'Save'),
                   ),
                 ),
-              ],
+                const SizedBox(height: 16),
+              ]),
             ),
-            CupertinoFormSection.insetGrouped(
-              header: const Text('Picture'),
-              children: [
-                CupertinoFormRow(
-                  prefix: _formPrefix('Image'),
-                  child: Row(
-                    children: [
-                      _ImagePreview(
-                        filePath: _selectedImage?.path,
-                        hasExisting: _pictureKey != null,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _selectedImage != null || _pictureKey != null
-                              ? 'Selected'
-                              : 'None',
-                        ),
-                      ),
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: _isSaving ? null : _showImageActions,
-                        child: const Text('Edit'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (_errorMessage != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: CupertinoColors.systemRed),
-                ),
-              ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: CupertinoButton.filled(
-                onPressed: _isSaving ? null : _submit,
-                child: Text(_isSaving ? 'Saving…' : 'Save'),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
