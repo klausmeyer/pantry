@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class BestBeforeBadge extends StatelessWidget {
   const BestBeforeBadge({super.key, required this.bestBefore});
@@ -53,19 +53,19 @@ String bestBeforeLabel(String bestBefore) {
 BestBeforeColors bestBeforeColors(BuildContext context, int delta) {
   if (delta < 0) {
     return BestBeforeColors(
-      background: Colors.red.shade100,
-      foreground: Colors.red.shade900,
+      background: CupertinoColors.systemRed.withOpacity(0.2),
+      foreground: CupertinoColors.systemRed,
     );
   }
   if (delta <= 14) {
     return BestBeforeColors(
-      background: Colors.orange.shade100,
-      foreground: Colors.orange.shade900,
+      background: CupertinoColors.systemOrange.withOpacity(0.2),
+      foreground: CupertinoColors.systemOrange,
     );
   }
   return BestBeforeColors(
-    background: Colors.green.shade100,
-    foreground: Colors.green.shade900,
+    background: CupertinoColors.systemGreen.withOpacity(0.2),
+    foreground: CupertinoColors.systemGreen,
   );
 }
 

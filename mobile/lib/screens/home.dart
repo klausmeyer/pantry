@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 import '../models/auth.dart';
 import '../models/item.dart';
@@ -199,6 +199,64 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
     });
   }
 
+  Future<void> _selectSortBy() async {
+    final selected = await showCupertinoModalPopup<ItemSortBy>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Sort by'),
+        actions: [
+          for (final value in ItemSortBy.values)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.of(context).pop(value),
+              isDefaultAction: value == _sortBy,
+              child: Text(_sortByLabel(value)),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+
+    if (selected == null) {
+      return;
+    }
+    setState(() {
+      _sortBy = selected;
+      _itemsFuture = _loadItems();
+    });
+  }
+
+  Future<void> _selectImageFilter() async {
+    final selected = await showCupertinoModalPopup<ImageFilter>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Filter'),
+        actions: [
+          for (final value in ImageFilter.values)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.of(context).pop(value),
+              isDefaultAction: value == _imageFilter,
+              child: Text(_filterLabel(value)),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+
+    if (selected == null) {
+      return;
+    }
+    setState(() {
+      _imageFilter = selected;
+      _itemsFuture = _loadItems();
+    });
+  }
+
   void _clearSearch() {
     _searchController.clear();
     setState(() {
@@ -209,7 +267,7 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
 
   Future<void> _openCreate() async {
     final result = await Navigator.of(context).push<Item>(
-      MaterialPageRoute(
+      CupertinoPageRoute(
         builder: (context) => ItemFormPage(
           title: 'Create item',
           initial: null,
@@ -229,7 +287,7 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
 
   Future<void> _openEdit(Item item) async {
     final result = await Navigator.of(context).push<Item>(
-      MaterialPageRoute(
+      CupertinoPageRoute(
         builder: (context) => ItemFormPage(
           title: 'Edit item',
           initial: item,
@@ -248,18 +306,19 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
   }
 
   Future<void> _confirmDelete(Item item) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: const Text('Delete item?'),
         content: Text('This will remove "${item.name}" from your pantry.'),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(true),
+            isDestructiveAction: true,
             child: const Text('Delete'),
           ),
         ],
@@ -275,16 +334,23 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted ${item.name}.')),
-      );
       await _reloadItems();
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $error')),
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text('Delete failed'),
+          content: Text(error.toString()),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
     }
   }
@@ -294,10 +360,10 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
       return;
     }
 
-    showDialog<void>(
+    showCupertinoDialog<void>(
       context: context,
       builder: (context) {
-        return AlertDialog(
+        return CupertinoAlertDialog(
           title: Text(item.name),
           content: FutureBuilder<String>(
             future: _withAccessToken(
@@ -307,7 +373,7 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SizedBox(
                   height: 120,
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CupertinoActivityIndicator()),
                 );
               }
               if (snapshot.hasError) {
@@ -327,7 +393,7 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
             },
           ),
           actions: [
-            TextButton(
+            CupertinoDialogAction(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
             ),
@@ -346,278 +412,291 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pantry'),
-        actions: [
-          if (_authState != null)
-            IconButton(
-              onPressed: _openCreate,
-              icon: const Icon(Icons.add),
-              tooltip: 'Create item',
-            ),
-          if (_authState != null)
-            TextButton(
-              onPressed: _signOut,
-              child: const Text('Sign out'),
-            ),
-        ],
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Pantry'),
+        trailing: _authState == null
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: _openCreate,
+                    child: const Icon(CupertinoIcons.add),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: _signOut,
+                    child: const Icon(CupertinoIcons.square_arrow_right),
+                  ),
+                ],
+              ),
       ),
-      body: _isBootstrapping
-          ? const Center(child: CircularProgressIndicator())
-          : _authState == null
-              ? AuthGate(
-                  isAuthenticating: _isAuthenticating,
-                  errorMessage: _authError,
-                  onSignIn: _signIn,
-                )
-              : FutureBuilder<List<Item>>(
-                  future: _itemsFuture ?? _loadItems(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return ErrorState(
-                        message: snapshot.error.toString(),
-                        onRetry: _reloadItems,
-                      );
-                    }
-                    final items = snapshot.data ?? [];
-                    if (items.isEmpty) {
-                      return EmptyState(onCreate: _openCreate);
-                    }
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length + 1,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      final profile = _authState?.profile;
-                      return Column(
-                        children: [
-                          Card(
-                            child: ListTile(
-                              leading:
-                                  const Icon(Icons.account_circle_outlined),
-                              title: Text(profile?.displayName ?? 'Signed in'),
-                              subtitle: Text(profile?.email ?? 'Token active'),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                children: [
-                                  Row(
+      child: SafeArea(
+        child: _isBootstrapping
+            ? const Center(child: CupertinoActivityIndicator())
+            : _authState == null
+                ? AuthGate(
+                    isAuthenticating: _isAuthenticating,
+                    errorMessage: _authError,
+                    onSignIn: _signIn,
+                  )
+                : FutureBuilder<List<Item>>(
+                    future: _itemsFuture ?? _loadItems(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CupertinoActivityIndicator(),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return ErrorState(
+                          message: snapshot.error.toString(),
+                          onRetry: _reloadItems,
+                        );
+                      }
+                      final items = snapshot.data ?? [];
+                      if (items.isEmpty) {
+                        return EmptyState(onCreate: _openCreate);
+                      }
+                      return ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: items.length + 1,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            final profile = _authState?.profile;
+                            return Column(
+                              children: [
+                                _CupertinoCard(
+                                  child: Row(
                                     children: [
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _searchController,
-                                          decoration: InputDecoration(
-                                            labelText: 'Search',
-                                            hintText: 'Search items',
-                                            prefixIcon: const Icon(
-                                              Icons.search_outlined,
-                                            ),
-                                            suffixIcon: _searchTerm.isEmpty
-                                                ? null
-                                                : IconButton(
-                                                    onPressed: _clearSearch,
-                                                    icon: const Icon(
-                                                      Icons.close_rounded,
-                                                    ),
-                                                  ),
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                          onChanged: _onSearchChanged,
-                                        ),
+                                      const Icon(
+                                        CupertinoIcons.person_circle,
+                                        size: 28,
                                       ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        onPressed: _submitSearch,
-                                        icon: const Icon(Icons.send_outlined),
-                                        tooltip: 'Search',
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              profile?.displayName ??
+                                                  'Signed in',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              profile?.email ?? 'Token active',
+                                              style: const TextStyle(
+                                                color: CupertinoColors
+                                                    .systemGrey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
-                                  Column(
+                                ),
+                                const SizedBox(height: 12),
+                                _CupertinoCard(
+                                  child: Column(
                                     children: [
                                       Row(
                                         children: [
                                           Expanded(
-                                            child:
-                                                DropdownButtonFormField<ItemSortBy>(
-                                              value: _sortBy,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Sort by',
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              items: ItemSortBy.values
-                                                  .map(
-                                                    (value) =>
-                                                        DropdownMenuItem(
-                                                      value: value,
-                                                      child: Text(
-                                                        _sortByLabel(value),
-                                                      ),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                              onChanged: (value) {
-                                                if (value == null) {
-                                                  return;
-                                                }
-                                                setState(() {
-                                                  _sortBy = value;
-                                                  _itemsFuture = _loadItems();
-                                                });
-                                              },
+                                            child: CupertinoSearchTextField(
+                                              controller: _searchController,
+                                              placeholder: 'Search items',
+                                              onChanged: _onSearchChanged,
                                             ),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: DropdownButtonFormField<
-                                                ImageFilter>(
-                                              value: _imageFilter,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Filter',
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              items: ImageFilter.values
-                                                  .map(
-                                                    (value) =>
-                                                        DropdownMenuItem(
-                                                      value: value,
-                                                      child: Text(
-                                                        _filterLabel(value),
-                                                      ),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                              onChanged: (value) {
-                                                if (value == null) {
-                                                  return;
-                                                }
-                                                setState(() {
-                                                  _imageFilter = value;
-                                                  _itemsFuture = _loadItems();
-                                                });
-                                              },
+                                          const SizedBox(width: 8),
+                                          CupertinoButton(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: _submitSearch,
+                                            child: const Icon(
+                                              CupertinoIcons.arrow_right_circle,
                                             ),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 12),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton.icon(
-                                          onPressed: () {
-                                            setState(() {
-                                              _sortOrder =
-                                                  _sortOrder == SortOrder.asc
-                                                      ? SortOrder.desc
-                                                      : SortOrder.asc;
-                                              _itemsFuture = _loadItems();
-                                            });
-                                          },
-                                          icon: Icon(
-                                            _sortOrder == SortOrder.asc
-                                                ? Icons.arrow_upward
-                                                : Icons.arrow_downward,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: CupertinoButton(
+                                              padding: const EdgeInsets.symmetric(
+                                                vertical: 10,
+                                              ),
+                                              color:
+                                                  CupertinoColors.systemGrey6,
+                                              onPressed: _selectSortBy,
+                                              child: Text(
+                                                'Sort: ${_sortByLabel(_sortBy)}',
+                                              ),
+                                            ),
                                           ),
-                                          label: Text(
-                                            _sortOrder == SortOrder.asc
-                                                ? 'Ascending'
-                                                : 'Descending',
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: CupertinoButton(
+                                              padding: const EdgeInsets.symmetric(
+                                                vertical: 10,
+                                              ),
+                                              color:
+                                                  CupertinoColors.systemGrey6,
+                                              onPressed: _selectImageFilter,
+                                              child: Text(
+                                                _filterLabel(_imageFilter),
+                                              ),
+                                            ),
                                           ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      CupertinoSlidingSegmentedControl<
+                                          SortOrder>(
+                                        groupValue: _sortOrder,
+                                        onValueChanged: (value) {
+                                          if (value == null) {
+                                            return;
+                                          }
+                                          setState(() {
+                                            _sortOrder = value;
+                                            _itemsFuture = _loadItems();
+                                          });
+                                        },
+                                        children: const {
+                                          SortOrder.asc:
+                                              Text('Ascending'),
+                                          SortOrder.desc:
+                                              Text('Descending'),
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          final item = items[index - 1];
+                          return Stack(
+                            children: [
+                              _CupertinoCard(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    12,
+                                    96,
+                                    44,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 2),
+                                        child: Icon(
+                                          CupertinoIcons.cube_box,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(item.subtitle),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                        final item = items[index - 1];
-                        return Stack(
-                          children: [
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 12, 96, 44),
+                              if (item.bestBefore != null &&
+                                  item.bestBefore!.isNotEmpty)
+                                Positioned(
+                                  right: 12,
+                                  top: 8,
+                                  child: BestBeforeBadge(
+                                    bestBefore: item.bestBefore!,
+                                  ),
+                                ),
+                              Positioned(
+                                right: 6,
+                                bottom: 6,
                                 child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 4),
-                                      child: Icon(Icons.inventory_2_outlined),
+                                    if (item.pictureKey != null &&
+                                        item.pictureKey!.isNotEmpty)
+                                      CupertinoButton(
+                                        padding: EdgeInsets.zero,
+                                        onPressed: () => _viewImage(item),
+                                        child: const Icon(
+                                          CupertinoIcons.photo,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    CupertinoButton(
+                                      padding: EdgeInsets.zero,
+                                      onPressed: () => _openEdit(item),
+                                      child: const Icon(
+                                        CupertinoIcons.pencil,
+                                        size: 20,
+                                      ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.name,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(item.subtitle),
-                                        ],
+                                    CupertinoButton(
+                                      padding: EdgeInsets.zero,
+                                      onPressed: () => _confirmDelete(item),
+                                      child: const Icon(
+                                        CupertinoIcons.delete_simple,
+                                        size: 20,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                            if (item.bestBefore != null &&
-                                item.bestBefore!.isNotEmpty)
-                              Positioned(
-                                right: 12,
-                                top: 8,
-                                child: BestBeforeBadge(
-                                  bestBefore: item.bestBefore!,
-                                ),
-                              ),
-                            Positioned(
-                              right: 8,
-                              bottom: 8,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (item.pictureKey != null &&
-                                      item.pictureKey!.isNotEmpty)
-                                    IconButton(
-                                      icon: const Icon(Icons.image_outlined),
-                                      tooltip: 'View image',
-                                      onPressed: () => _viewImage(item),
-                                    ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    tooltip: 'Edit',
-                                    onPressed: () => _openEdit(item),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline),
-                                    tooltip: 'Delete',
-                                    onPressed: () => _confirmDelete(item),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-              },
-            ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+      ),
+    );
+  }
+}
+
+class _CupertinoCard extends StatelessWidget {
+  const _CupertinoCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemGrey6,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
     );
   }
 }

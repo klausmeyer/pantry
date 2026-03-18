@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 import 'screens/home.dart';
 
@@ -7,11 +7,12 @@ class PantryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return CupertinoApp(
       title: 'Pantry',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2D6A4F)),
-        useMaterial3: true,
+      theme: const CupertinoThemeData(
+        primaryColor: Color(0xFF2D6A4F),
+        barBackgroundColor: Color(0xFFF2F4F6),
+        scaffoldBackgroundColor: Color(0xFFF7F8FA),
       ),
       home: const PantryHomePage(),
     );

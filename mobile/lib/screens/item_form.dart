@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/item.dart';
@@ -25,7 +25,6 @@ class ItemFormPage extends StatefulWidget {
 }
 
 class _ItemFormPageState extends State<ItemFormPage> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _bestBeforeController = TextEditingController();
   final _contentAmountController = TextEditingController();
@@ -99,18 +98,44 @@ class _ItemFormPageState extends State<ItemFormPage> {
   Future<void> _pickBestBeforeDate() async {
     final now = DateTime.now();
     final initialDate = _parseBestBeforeDate() ?? now;
-    final picked = await showDatePicker(
+    await showCupertinoModalPopup<void>(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 10),
+      builder: (context) {
+        DateTime selected = initialDate;
+        return Container(
+          height: 300,
+          color: CupertinoColors.systemBackground,
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _bestBeforeController.text = _formatDate(selected);
+                    });
+                  },
+                  child: const Text('Done'),
+                ),
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: initialDate,
+                  minimumDate: DateTime(now.year - 5),
+                  maximumDate: DateTime(now.year + 10),
+                  onDateTimeChanged: (value) {
+                    selected = value;
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
-    if (picked == null) {
-      return;
-    }
-    setState(() {
-      _bestBeforeController.text = _formatDate(picked);
-    });
   }
 
   DateTime? _parseBestBeforeDate() {
@@ -138,9 +163,66 @@ class _ItemFormPageState extends State<ItemFormPage> {
     return '$year-$month-$day';
   }
 
+  Future<void> _selectPackaging() async {
+    final selected = await _showOptionsSheet(
+      title: 'Packaging',
+      options: _packagingOptions,
+      current: _packaging,
+    );
+    if (selected == null) {
+      return;
+    }
+    setState(() {
+      _packaging = selected;
+    });
+  }
+
+  Future<void> _selectContentUnit() async {
+    final selected = await _showOptionsSheet(
+      title: 'Content unit',
+      options: _contentUnitOptions,
+      current: _contentUnit,
+    );
+    if (selected == null) {
+      return;
+    }
+    setState(() {
+      _contentUnit = selected;
+    });
+  }
+
+  Future<String?> _showOptionsSheet({
+    required String title,
+    required List<String> options,
+    required String? current,
+  }) {
+    return showCupertinoModalPopup<String>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text(title),
+        actions: [
+          for (final option in options)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.of(context).pop(option),
+              isDefaultAction: option == current,
+              child: Text(option),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _submit() async {
-    final form = _formKey.currentState;
-    if (form == null || !form.validate()) {
+    final nameError = _validateName(_nameController.text);
+    final dateError = _validateBestBefore(_bestBeforeController.text);
+    if (nameError != null || dateError != null) {
+      setState(() {
+        _errorMessage = nameError ?? dateError;
+      });
       return;
     }
 
@@ -191,21 +273,9 @@ class _ItemFormPageState extends State<ItemFormPage> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image == null) {
-      return;
-    }
-    setState(() {
-      _selectedImage = image;
-      _clearPicture = false;
-    });
-  }
-
-  Future<void> _takePhoto() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.camera);
+    final image = await picker.pickImage(source: source);
     if (image == null) {
       return;
     }
@@ -225,144 +295,149 @@ class _ItemFormPageState extends State<ItemFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(widget.title),
       ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              TextFormField(
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _CupertinoField(
+              label: 'Name',
+              child: CupertinoTextField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: _validateName,
+                placeholder: 'Name',
               ),
-              const SizedBox(height: 16),
-              TextFormField(
+            ),
+            const SizedBox(height: 12),
+            _CupertinoField(
+              label: 'Best before',
+              child: CupertinoTextField(
                 controller: _bestBeforeController,
-                decoration: const InputDecoration(
-                  labelText: 'Best before (YYYY-MM-DD)',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
+                placeholder: 'YYYY-MM-DD',
                 readOnly: true,
                 onTap: _pickBestBeforeDate,
-                validator: _validateBestBefore,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
+            ),
+            const SizedBox(height: 12),
+            _CupertinoField(
+              label: 'Content amount',
+              child: CupertinoTextField(
                 controller: _contentAmountController,
-                decoration: const InputDecoration(
-                  labelText: 'Content amount',
-                  border: OutlineInputBorder(),
-                ),
+                placeholder: 'e.g. 250',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _contentUnit,
-                decoration: const InputDecoration(
-                  labelText: 'Content unit',
-                  border: OutlineInputBorder(),
+            ),
+            const SizedBox(height: 12),
+            _CupertinoField(
+              label: 'Content unit',
+              child: CupertinoButton(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                color: CupertinoColors.systemGrey6,
+                onPressed: _selectContentUnit,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(_contentUnit ?? 'Select unit'),
                 ),
-                items: _contentUnitOptions
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(value),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _contentUnit = value;
-                  });
-                },
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _packaging,
-                decoration: const InputDecoration(
-                  labelText: 'Packaging',
-                  border: OutlineInputBorder(),
+            ),
+            const SizedBox(height: 12),
+            _CupertinoField(
+              label: 'Packaging',
+              child: CupertinoButton(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                color: CupertinoColors.systemGrey6,
+                onPressed: _selectPackaging,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(_packaging ?? 'Select packaging'),
                 ),
-                items: _packagingOptions
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(value),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _packaging = value;
-                  });
-                },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
+            ),
+            const SizedBox(height: 12),
+            _CupertinoField(
+              label: 'Comment',
+              child: CupertinoTextField(
                 controller: _commentController,
-                decoration: const InputDecoration(
-                  labelText: 'Comment',
-                  border: OutlineInputBorder(),
-                ),
+                placeholder: 'Optional',
                 maxLines: 3,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Picture',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  FilledButton.icon(
-                    onPressed: _isSaving ? null : _pickImage,
-                    icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Select image'),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: _isSaving ? null : _takePhoto,
-                    icon: const Icon(Icons.photo_camera_outlined),
-                    label: const Text('Take photo'),
-                  ),
-                  const SizedBox(width: 12),
-                  if (_selectedImage != null || _pictureKey != null)
-                    TextButton(
-                      onPressed: _isSaving ? null : _removeImage,
-                      child: const Text('Remove'),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_selectedImage != null)
-                Text('Selected: ${_selectedImage!.name}'),
-              if (_selectedImage == null && _pictureKey != null)
-                Text('Existing: ${_pictureKey!}'),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Picture',
+              style: CupertinoTheme.of(context)
+                  .textTheme
+                  .textStyle
+                  .copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                CupertinoButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () => _pickImage(ImageSource.gallery),
+                  child: const Text('Select image'),
                 ),
+                CupertinoButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () => _pickImage(ImageSource.camera),
+                  child: const Text('Take photo'),
+                ),
+                if (_selectedImage != null || _pictureKey != null)
+                  CupertinoButton(
+                    onPressed: _isSaving ? null : _removeImage,
+                    child: const Text('Remove'),
+                  ),
               ],
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _isSaving ? null : _submit,
-                child: Text(_isSaving ? 'Saving…' : 'Save'),
+            ),
+            if (_selectedImage != null)
+              Text('Selected: ${_selectedImage!.name}'),
+            if (_selectedImage == null && _pictureKey != null)
+              Text('Existing: ${_pictureKey!}'),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: CupertinoColors.systemRed),
               ),
             ],
-          ),
+            const SizedBox(height: 20),
+            CupertinoButton.filled(
+              onPressed: _isSaving ? null : _submit,
+              child: Text(_isSaving ? 'Saving…' : 'Save'),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _CupertinoField extends StatelessWidget {
+  const _CupertinoField({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: CupertinoTheme.of(context)
+              .textTheme
+              .textStyle
+              .copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        child,
+      ],
     );
   }
 }

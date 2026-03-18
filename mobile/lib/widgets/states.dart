@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 import '../config.dart';
 
@@ -23,48 +23,41 @@ class AuthGate extends StatelessWidget {
         children: [
           Text(
             'Sign in to load pantry items.',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
           ),
           const SizedBox(height: 12),
           const Text(
             'We will open the OIDC login page and return with an access token.',
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
+          CupertinoButton.filled(
             onPressed: isAuthenticating ? null : onSignIn,
-            icon: const Icon(Icons.login),
-            label: Text(isAuthenticating ? 'Signing in…' : 'Sign in'),
+            child: Text(isAuthenticating ? 'Signing in…' : 'Sign in'),
           ),
           if (errorMessage != null) ...[
             const SizedBox(height: 16),
             Text(
               errorMessage!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: const TextStyle(color: CupertinoColors.systemRed),
             ),
           ],
           const SizedBox(height: 24),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.cloud_outlined),
-              title: const Text('API Base URL'),
-              subtitle: Text(apiBaseUrl),
-            ),
+          _InfoTile(
+            title: 'API Base URL',
+            subtitle: apiBaseUrl,
+            icon: CupertinoIcons.cloud,
           ),
           const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.verified_user_outlined),
-              title: const Text('OIDC Issuer'),
-              subtitle: Text(oidcIssuer),
-            ),
+          _InfoTile(
+            title: 'OIDC Issuer',
+            subtitle: oidcIssuer,
+            icon: CupertinoIcons.check_mark_circled,
           ),
           const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.badge_outlined),
-              title: const Text('OIDC Client ID'),
-              subtitle: Text(oidcClientId),
-            ),
+          _InfoTile(
+            title: 'OIDC Client ID',
+            subtitle: oidcClientId,
+            icon: CupertinoIcons.person_crop_rectangle,
           ),
         ],
       ),
@@ -86,23 +79,20 @@ class EmptyState extends StatelessWidget {
         children: [
           Text(
             'No pantry items yet.',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
           ),
           const SizedBox(height: 12),
           const Text('Create your first item to get started.'),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
+          CupertinoButton.filled(
             onPressed: onCreate,
-            icon: const Icon(Icons.add),
-            label: const Text('Create item'),
+            child: const Text('Create item'),
           ),
           const SizedBox(height: 20),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.cloud_outlined),
-              title: const Text('API Base URL'),
-              subtitle: Text(apiBaseUrl),
-            ),
+          _InfoTile(
+            title: 'API Base URL',
+            subtitle: apiBaseUrl,
+            icon: CupertinoIcons.cloud,
           ),
         ],
       ),
@@ -125,22 +115,64 @@ class ErrorState extends StatelessWidget {
         children: [
           Text(
             'Unable to load pantry items.',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
           ),
           const SizedBox(height: 12),
           Text(message),
           const SizedBox(height: 16),
-          OutlinedButton.icon(
+          CupertinoButton(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            child: const Text('Retry'),
           ),
           const SizedBox(height: 20),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.cloud_off_outlined),
-              title: const Text('API Base URL'),
-              subtitle: Text(apiBaseUrl),
+          _InfoTile(
+            title: 'API Base URL',
+            subtitle: apiBaseUrl,
+            icon: CupertinoIcons.cloud,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemGrey6,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: CupertinoColors.systemGrey),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(subtitle),
+              ],
             ),
           ),
         ],
