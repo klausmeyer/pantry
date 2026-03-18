@@ -406,34 +406,74 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                       );
                     }
                     final item = items[index - 1];
-                    return Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.inventory_2_outlined),
-                        title: Text(item.name),
-                        subtitle: Text(item.subtitle),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (item.pictureKey != null &&
-                                item.pictureKey!.isNotEmpty)
-                              IconButton(
-                                icon: const Icon(Icons.image_outlined),
-                                tooltip: 'View image',
-                                onPressed: () => _viewImage(item),
-                              ),
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              tooltip: 'Edit',
-                              onPressed: () => _openEdit(item),
+                    return Stack(
+                      children: [
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 96, 44),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 4),
+                                  child: Icon(Icons.inventory_2_outlined),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(item.subtitle),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Delete',
-                              onPressed: () => _confirmDelete(item),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        if (item.bestBefore != null &&
+                            item.bestBefore!.isNotEmpty)
+                          Positioned(
+                            right: 12,
+                            top: 8,
+                            child: BestBeforeBadge(
+                              bestBefore: item.bestBefore!,
+                            ),
+                          ),
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (item.pictureKey != null &&
+                                  item.pictureKey!.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.image_outlined),
+                                  tooltip: 'View image',
+                                  onPressed: () => _viewImage(item),
+                                ),
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                tooltip: 'Edit',
+                                onPressed: () => _openEdit(item),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: 'Delete',
+                                onPressed: () => _confirmDelete(item),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     );
                   },
                 );
@@ -617,9 +657,6 @@ class Item {
     }
     if (packaging != null && packaging!.isNotEmpty) {
       parts.add(packaging!);
-    }
-    if (bestBefore != null && bestBefore!.isNotEmpty) {
-      parts.add('Best before $bestBefore');
     }
     if (comment != null && comment!.isNotEmpty) {
       parts.add(comment!);
@@ -1035,6 +1072,88 @@ class _ItemFormPageState extends State<ItemFormPage> {
       ),
     );
   }
+}
+
+class BestBeforeBadge extends StatelessWidget {
+  const BestBeforeBadge({super.key, required this.bestBefore});
+
+  final String bestBefore;
+
+  @override
+  Widget build(BuildContext context) {
+    final delta = bestBeforeDeltaDays(bestBefore);
+    final label = bestBeforeLabel(bestBefore);
+    final colors = bestBeforeColors(context, delta);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: colors.foreground,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+int bestBeforeDeltaDays(String bestBefore) {
+  final today = _startOfUtcDate(DateTime.now());
+  final target = _startOfUtcDate(DateTime.parse('${bestBefore}T00:00:00Z'));
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return ((target.millisecondsSinceEpoch - today.millisecondsSinceEpoch) / msPerDay)
+      .round();
+}
+
+String bestBeforeLabel(String bestBefore) {
+  final delta = bestBeforeDeltaDays(bestBefore);
+  final dayWord = _dayWord(delta.abs());
+  if (delta < 0) {
+    final days = delta.abs();
+    return '$days $dayWord overdue';
+  }
+  if (delta == 0) {
+    return 'Expires today';
+  }
+  return '$delta ${_dayWord(delta)} left';
+}
+
+_BestBeforeColors bestBeforeColors(BuildContext context, int delta) {
+  if (delta < 0) {
+    return _BestBeforeColors(
+      background: Colors.red.shade100,
+      foreground: Colors.red.shade900,
+    );
+  }
+  if (delta <= 14) {
+    return _BestBeforeColors(
+      background: Colors.orange.shade100,
+      foreground: Colors.orange.shade900,
+    );
+  }
+  return _BestBeforeColors(
+    background: Colors.green.shade100,
+    foreground: Colors.green.shade900,
+  );
+}
+
+String _dayWord(int count) => count == 1 ? 'day' : 'days';
+
+DateTime _startOfUtcDate(DateTime date) {
+  return DateTime.utc(date.year, date.month, date.day);
+}
+
+class _BestBeforeColors {
+  const _BestBeforeColors({required this.background, required this.foreground});
+
+  final Color background;
+  final Color foreground;
 }
 
 class AuthState {
