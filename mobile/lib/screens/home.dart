@@ -257,6 +257,110 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
     });
   }
 
+  Widget _buildHeader(UserProfile? profile) {
+    return Column(
+      children: [
+        _CupertinoCard(
+          child: Row(
+            children: [
+              const Icon(
+                CupertinoIcons.person_circle,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile?.displayName ?? 'Signed in',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      profile?.email ?? 'Token active',
+                      style: const TextStyle(
+                        color: CupertinoColors.systemGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _CupertinoCard(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                Expanded(
+                  child: CupertinoSearchTextField(
+                    controller: _searchController,
+                    placeholder: 'Search items',
+                    onChanged: _onSearchChanged,
+                    autocorrect: false,
+                  ),
+                ),
+                  const SizedBox(width: 8),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: _submitSearch,
+                    child: const Icon(
+                      CupertinoIcons.arrow_right_circle,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: CupertinoButton(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      color: CupertinoColors.systemGrey6,
+                      onPressed: _selectSortBy,
+                      child: Text('Sort: ${_sortByLabel(_sortBy)}'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: CupertinoButton(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      color: CupertinoColors.systemGrey6,
+                      onPressed: _selectImageFilter,
+                      child: Text(_filterLabel(_imageFilter)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              CupertinoSlidingSegmentedControl<SortOrder>(
+                groupValue: _sortOrder,
+                onValueChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _sortOrder = value;
+                    _itemsFuture = _loadItems();
+                  });
+                },
+                children: const {
+                  SortOrder.asc: Text('Ascending'),
+                  SortOrder.desc: Text('Descending'),
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   void _clearSearch() {
     _searchController.clear();
     setState(() {
@@ -458,133 +562,18 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                         );
                       }
                       final items = snapshot.data ?? [];
-                      if (items.isEmpty) {
-                        return EmptyState(onCreate: _openCreate);
-                      }
                       return ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        itemCount: items.length + 1,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 12),
+                        itemCount: items.isEmpty ? 2 : items.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           if (index == 0) {
                             final profile = _authState?.profile;
-                            return Column(
-                              children: [
-                                _CupertinoCard(
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        CupertinoIcons.person_circle,
-                                        size: 28,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              profile?.displayName ??
-                                                  'Signed in',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              profile?.email ?? 'Token active',
-                                              style: const TextStyle(
-                                                color: CupertinoColors
-                                                    .systemGrey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                _CupertinoCard(
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: CupertinoSearchTextField(
-                                              controller: _searchController,
-                                              placeholder: 'Search items',
-                                              onChanged: _onSearchChanged,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          CupertinoButton(
-                                            padding: EdgeInsets.zero,
-                                            onPressed: _submitSearch,
-                                            child: const Icon(
-                                              CupertinoIcons.arrow_right_circle,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: CupertinoButton(
-                                              padding: const EdgeInsets.symmetric(
-                                                vertical: 10,
-                                              ),
-                                              color:
-                                                  CupertinoColors.systemGrey6,
-                                              onPressed: _selectSortBy,
-                                              child: Text(
-                                                'Sort: ${_sortByLabel(_sortBy)}',
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: CupertinoButton(
-                                              padding: const EdgeInsets.symmetric(
-                                                vertical: 10,
-                                              ),
-                                              color:
-                                                  CupertinoColors.systemGrey6,
-                                              onPressed: _selectImageFilter,
-                                              child: Text(
-                                                _filterLabel(_imageFilter),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      CupertinoSlidingSegmentedControl<
-                                          SortOrder>(
-                                        groupValue: _sortOrder,
-                                        onValueChanged: (value) {
-                                          if (value == null) {
-                                            return;
-                                          }
-                                          setState(() {
-                                            _sortOrder = value;
-                                            _itemsFuture = _loadItems();
-                                          });
-                                        },
-                                        children: const {
-                                          SortOrder.asc:
-                                              Text('Ascending'),
-                                          SortOrder.desc:
-                                              Text('Descending'),
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            );
+                            return _buildHeader(profile);
+                          }
+
+                          if (items.isEmpty) {
+                            return EmptyState(onCreate: _openCreate);
                           }
                           final item = items[index - 1];
                           return Stack(

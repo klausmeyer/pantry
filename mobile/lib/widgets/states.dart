@@ -78,22 +78,12 @@ class EmptyState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'No pantry items yet.',
+            'No items found.',
             style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
           ),
           const SizedBox(height: 12),
           const Text('Create your first item to get started.'),
           const SizedBox(height: 16),
-          CupertinoButton.filled(
-            onPressed: onCreate,
-            child: const Text('Create item'),
-          ),
-          const SizedBox(height: 20),
-          _InfoTile(
-            title: 'API Base URL',
-            subtitle: apiBaseUrl,
-            icon: CupertinoIcons.cloud,
-          ),
         ],
       ),
     );
