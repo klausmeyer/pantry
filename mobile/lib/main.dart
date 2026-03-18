@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 
@@ -1406,13 +1408,117 @@ Future<void> deleteItem(String accessToken, String id) async {
 }
 
 Future<String> uploadImage(String accessToken, XFile file) async {
-  final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
-  final contentType =
-      file.mimeType ?? lookupMimeType(file.path) ?? 'image/jpeg';
-  final upload = await createUpload(accessToken, filename, contentType);
-  final bytes = await file.readAsBytes();
+  final prepared = await prepareUpload(file);
+  final upload = await createUpload(
+    accessToken,
+    prepared.filename,
+    prepared.contentType,
+  );
+  final bytes = prepared.bytes;
   await uploadToPresignedUrl(upload, bytes);
   return upload.pictureKey;
+}
+
+class PreparedUpload {
+  PreparedUpload({
+    required this.filename,
+    required this.contentType,
+    required this.bytes,
+  });
+
+  final String filename;
+  final String contentType;
+  final List<int> bytes;
+}
+
+Future<PreparedUpload> prepareUpload(XFile file) async {
+  final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
+  final contentType =
+      file.mimeType ?? lookupMimeType(file.path) ?? 'application/octet-stream';
+  final bytes = await file.readAsBytes();
+
+  if (!shouldResize(contentType)) {
+    return PreparedUpload(
+      filename: filename,
+      contentType: contentType,
+      bytes: bytes,
+    );
+  }
+
+  return resizeImageBytes(bytes, contentType, filename);
+}
+
+bool shouldResize(String contentType) {
+  return contentType == 'image/jpeg' ||
+      contentType == 'image/jpg' ||
+      contentType == 'image/png' ||
+      contentType == 'image/webp';
+}
+
+PreparedUpload resizeImageBytes(
+  List<int> bytes,
+  String contentType,
+  String filename,
+) {
+  final image = img.decodeImage(Uint8List.fromList(bytes));
+  if (image == null) {
+    return PreparedUpload(
+      filename: filename,
+      contentType: contentType,
+      bytes: bytes,
+    );
+  }
+
+  const maxDimension = 1600;
+  final width = image.width;
+  final height = image.height;
+  final scale = maxDimension / (width > height ? width : height);
+
+  if (scale >= 1) {
+    return PreparedUpload(
+      filename: filename,
+      contentType: contentType,
+      bytes: bytes,
+    );
+  }
+
+  final targetWidth = (width * scale).round().clamp(1, maxDimension);
+  final targetHeight = (height * scale).round().clamp(1, maxDimension);
+  final resized = img.copyResize(
+    image,
+    width: targetWidth,
+    height: targetHeight,
+    interpolation: img.Interpolation.average,
+  );
+
+  if (contentType == 'image/png') {
+    return PreparedUpload(
+      filename: filename,
+      contentType: contentType,
+      bytes: img.encodePng(resized),
+    );
+  }
+  if (contentType == 'image/webp') {
+    final jpegName = _replaceExtension(filename, 'jpg');
+    return PreparedUpload(
+      filename: jpegName,
+      contentType: 'image/jpeg',
+      bytes: img.encodeJpg(resized, quality: 85),
+    );
+  }
+  return PreparedUpload(
+    filename: filename,
+    contentType: contentType,
+    bytes: img.encodeJpg(resized, quality: 85),
+  );
+}
+
+String _replaceExtension(String filename, String newExtension) {
+  final dotIndex = filename.lastIndexOf('.');
+  if (dotIndex == -1) {
+    return '$filename.$newExtension';
+  }
+  return '${filename.substring(0, dotIndex)}.$newExtension';
 }
 
 Future<UploadInfo> createUpload(
