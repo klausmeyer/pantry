@@ -18,48 +18,40 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Sign in to load pantry items.',
-            style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
+      child: Center(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Sign in to continue.',
+                style:
+                    CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Please sign in to view your pantry.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              CupertinoButton.filled(
+                onPressed: isAuthenticating ? null : onSignIn,
+                child: Text(isAuthenticating ? 'Signing in…' : 'Sign in'),
+              ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  errorMessage!,
+                  style: const TextStyle(color: CupertinoColors.systemRed),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'We will open the OIDC login page and return with an access token.',
-          ),
-          const SizedBox(height: 24),
-          CupertinoButton.filled(
-            onPressed: isAuthenticating ? null : onSignIn,
-            child: Text(isAuthenticating ? 'Signing in…' : 'Sign in'),
-          ),
-          if (errorMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              errorMessage!,
-              style: const TextStyle(color: CupertinoColors.systemRed),
-            ),
-          ],
-          const SizedBox(height: 24),
-          _InfoTile(
-            title: 'API Base URL',
-            subtitle: apiBaseUrl,
-            icon: CupertinoIcons.cloud,
-          ),
-          const SizedBox(height: 12),
-          _InfoTile(
-            title: 'OIDC Issuer',
-            subtitle: oidcIssuer,
-            icon: CupertinoIcons.check_mark_circled,
-          ),
-          const SizedBox(height: 12),
-          _InfoTile(
-            title: 'OIDC Client ID',
-            subtitle: oidcClientId,
-            icon: CupertinoIcons.person_crop_rectangle,
-          ),
-        ],
+        ),
       ),
     );
   }

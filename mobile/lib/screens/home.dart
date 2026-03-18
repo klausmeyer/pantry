@@ -464,44 +464,53 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
       return;
     }
 
-    showCupertinoDialog<void>(
+    showCupertinoModalPopup<void>(
       context: context,
       builder: (context) {
-        return CupertinoAlertDialog(
-          title: Text(item.name),
-          content: FutureBuilder<String>(
-            future: _withAccessToken(
-              (token) => fetchPreviewUrl(token, item.pictureKey!),
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(
-                  height: 120,
-                  child: Center(child: CupertinoActivityIndicator()),
-                );
-              }
-              if (snapshot.hasError) {
-                return Text('Unable to load image: ${snapshot.error}');
-              }
-              final url = snapshot.data;
-              if (url == null || url.isEmpty) {
-                return const Text('No preview available.');
-              }
-              return Image.network(
-                url,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Text('Image failed to load: $error');
-                },
-              );
-            },
-          ),
-          actions: [
-            CupertinoDialogAction(
+        return CupertinoPageScaffold(
+          navigationBar: CupertinoNavigationBar(
+            middle: Text(item.name),
+            trailing: CupertinoButton(
+              padding: EdgeInsets.zero,
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
             ),
-          ],
+          ),
+          child: SafeArea(
+            child: FutureBuilder<String>(
+              future: _withAccessToken(
+                (token) => fetchPreviewUrl(token, item.pictureKey!),
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CupertinoActivityIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text('Unable to load image: ${snapshot.error}'),
+                    ),
+                  );
+                }
+                final url = snapshot.data;
+                if (url == null || url.isEmpty) {
+                  return const Center(child: Text('No preview available.'));
+                }
+                return InteractiveViewer(
+                  child: Center(
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Text('Image failed to load: $error');
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         );
       },
     );
