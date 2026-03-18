@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -25,6 +27,7 @@ class ItemFormPage extends StatefulWidget {
 }
 
 class _ItemFormPageState extends State<ItemFormPage> {
+  static const double _prefixWidth = 110;
   final _nameController = TextEditingController();
   final _bestBeforeController = TextEditingController();
   final _contentAmountController = TextEditingController();
@@ -85,13 +88,6 @@ class _ItemFormPageState extends State<ItemFormPage> {
   }
 
   String? _validateBestBefore(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return null;
-    }
-    final regex = RegExp(r'^\\d{4}-\\d{2}-\\d{2}$');
-    if (!regex.hasMatch(value.trim())) {
-      return 'Use YYYY-MM-DD.';
-    }
     return null;
   }
 
@@ -161,6 +157,16 @@ class _ItemFormPageState extends State<ItemFormPage> {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+
+  String _normalizeBestBefore(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    return trimmed
+        .replaceAll(RegExp(r'[–—−]'), '-')
+        .replaceAll(RegExp(r'\\s+'), '');
   }
 
   Future<void> _selectPackaging() async {
@@ -241,11 +247,13 @@ class _ItemFormPageState extends State<ItemFormPage> {
         pictureKey = await widget.onUploadImage(_selectedImage!);
         clearPicture = false;
       }
+      final bestBefore = _normalizeBestBefore(_bestBeforeController.text);
+      final normalizedBestBefore = bestBefore.isEmpty
+          ? null
+          : _formatDate(DateTime.parse(bestBefore));
       final draft = ItemDraft(
         name: _nameController.text.trim(),
-        bestBefore: _bestBeforeController.text.trim().isEmpty
-            ? null
-            : _bestBeforeController.text.trim(),
+        bestBefore: normalizedBestBefore,
         contentAmount: contentAmount,
         contentUnit: _contentUnit?.trim().isEmpty ?? true ? null : _contentUnit,
         packaging: _packaging?.trim().isEmpty ?? true ? null : _packaging,
@@ -293,6 +301,49 @@ class _ItemFormPageState extends State<ItemFormPage> {
     });
   }
 
+  Future<void> _showImageActions() async {
+    final action = await showCupertinoModalPopup<_ImageAction>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Picture'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(_ImageAction.gallery),
+            child: const Text('Select image'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(_ImageAction.camera),
+            child: const Text('Take photo'),
+          ),
+          if (_selectedImage != null || _pictureKey != null)
+            CupertinoActionSheetAction(
+              onPressed: () => Navigator.of(context).pop(_ImageAction.remove),
+              isDestructiveAction: true,
+              child: const Text('Remove'),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+
+    switch (action) {
+      case _ImageAction.gallery:
+        await _pickImage(ImageSource.gallery);
+        break;
+      case _ImageAction.camera:
+        await _pickImage(ImageSource.camera);
+        break;
+      case _ImageAction.remove:
+        _removeImage();
+        break;
+      case null:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -301,114 +352,118 @@ class _ItemFormPageState extends State<ItemFormPage> {
       ),
       child: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           children: [
-            _CupertinoField(
-              label: 'Name',
-              child: CupertinoTextField(
-                controller: _nameController,
-                placeholder: 'Name',
-              ),
-            ),
-            const SizedBox(height: 12),
-            _CupertinoField(
-              label: 'Best before',
-              child: CupertinoTextField(
-                controller: _bestBeforeController,
-                placeholder: 'YYYY-MM-DD',
-                readOnly: true,
-                onTap: _pickBestBeforeDate,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _CupertinoField(
-              label: 'Content amount',
-              child: CupertinoTextField(
-                controller: _contentAmountController,
-                placeholder: 'e.g. 250',
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _CupertinoField(
-              label: 'Content unit',
-              child: CupertinoButton(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                color: CupertinoColors.systemGrey6,
-                onPressed: _selectContentUnit,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(_contentUnit ?? 'Select unit'),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _CupertinoField(
-              label: 'Packaging',
-              child: CupertinoButton(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                color: CupertinoColors.systemGrey6,
-                onPressed: _selectPackaging,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(_packaging ?? 'Select packaging'),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _CupertinoField(
-              label: 'Comment',
-              child: CupertinoTextField(
-                controller: _commentController,
-                placeholder: 'Optional',
-                maxLines: 3,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Picture',
-              style: CupertinoTheme.of(context)
-                  .textTheme
-                  .textStyle
-                  .copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Row(
+            CupertinoFormSection.insetGrouped(
+              header: const Text('Details'),
               children: [
-                CupertinoButton(
-                  onPressed: _isSaving
-                      ? null
-                      : () => _pickImage(ImageSource.gallery),
-                  child: const Text('Select image'),
+                CupertinoTextFormFieldRow(
+                  controller: _nameController,
+                  placeholder: 'Name',
+                  prefix: _formPrefix('Name'),
                 ),
-                CupertinoButton(
-                  onPressed: _isSaving
-                      ? null
-                      : () => _pickImage(ImageSource.camera),
-                  child: const Text('Take photo'),
+                CupertinoTextFormFieldRow(
+                  controller: _bestBeforeController,
+                  placeholder: 'YYYY-MM-DD',
+                  readOnly: true,
+                  prefix: _formPrefix('Best before'),
+                  onTap: _pickBestBeforeDate,
                 ),
-                if (_selectedImage != null || _pictureKey != null)
-                  CupertinoButton(
-                    onPressed: _isSaving ? null : _removeImage,
-                    child: const Text('Remove'),
+                CupertinoTextFormFieldRow(
+                  controller: _contentAmountController,
+                  placeholder: 'e.g. 250',
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  prefix: _formPrefix('Amount'),
+                ),
+                CupertinoFormRow(
+                  prefix: _formPrefix('Unit'),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: CupertinoButton(
+                      padding: const EdgeInsets.only(left: 6),
+                      onPressed: _selectContentUnit,
+                      child: Text(_contentUnit ?? 'Select'),
+                    ),
                   ),
+                ),
+                CupertinoFormRow(
+                  prefix: _formPrefix('Packaging'),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: CupertinoButton(
+                      padding: const EdgeInsets.only(left: 6),
+                      onPressed: _selectPackaging,
+                      child: Text(_packaging ?? 'Select'),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsetsDirectional.fromSTEB(20, 6, 6, 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _formPrefix('Comment'),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: CupertinoTextField(
+                            controller: _commentController,
+                            placeholder: 'Optional',
+                            maxLines: 3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            if (_selectedImage != null)
-              Text('Selected: ${_selectedImage!.name}'),
-            if (_selectedImage == null && _pictureKey != null)
-              Text('Existing: ${_pictureKey!}'),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: CupertinoColors.systemRed),
+            CupertinoFormSection.insetGrouped(
+              header: const Text('Picture'),
+              children: [
+                CupertinoFormRow(
+                  prefix: _formPrefix('Image'),
+                  child: Row(
+                    children: [
+                      _ImagePreview(
+                        filePath: _selectedImage?.path,
+                        hasExisting: _pictureKey != null,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _selectedImage != null || _pictureKey != null
+                              ? 'Selected'
+                              : 'None',
+                        ),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: _isSaving ? null : _showImageActions,
+                        child: const Text('Edit'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (_errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: CupertinoColors.systemRed),
+                ),
               ),
-            ],
-            const SizedBox(height: 20),
-            CupertinoButton.filled(
-              onPressed: _isSaving ? null : _submit,
-              child: Text(_isSaving ? 'Saving…' : 'Save'),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: CupertinoButton.filled(
+                onPressed: _isSaving ? null : _submit,
+                child: Text(_isSaving ? 'Saving…' : 'Save'),
+              ),
             ),
           ],
         ),
@@ -417,27 +472,44 @@ class _ItemFormPageState extends State<ItemFormPage> {
   }
 }
 
-class _CupertinoField extends StatelessWidget {
-  const _CupertinoField({required this.label, required this.child});
+enum _ImageAction { gallery, camera, remove }
 
-  final String label;
-  final Widget child;
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({this.filePath, required this.hasExisting});
+
+  final String? filePath;
+  final bool hasExisting;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: CupertinoTheme.of(context)
-              .textTheme
-              .textStyle
-              .copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 6),
-        child,
-      ],
+    final size = 44.0;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemGrey5,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: filePath != null
+          ? Image.file(
+              File(filePath!),
+              fit: BoxFit.cover,
+            )
+          : Icon(
+              hasExisting
+                  ? CupertinoIcons.photo_on_rectangle
+                  : CupertinoIcons.photo,
+              color: CupertinoColors.systemGrey,
+              size: 22,
+            ),
     );
   }
+}
+
+Widget _formPrefix(String label) {
+  return SizedBox(
+    width: _ItemFormPageState._prefixWidth,
+    child: Text(label),
+  );
 }
