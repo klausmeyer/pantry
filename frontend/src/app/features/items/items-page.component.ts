@@ -21,6 +21,7 @@ export class ItemsPageComponent {
   readonly user$: Observable<User | null> = this.auth.user$;
 
   locale: Locale = 'en';
+  readonly expiringSoonDays = 14;
 
   items: Item[] = [];
   loading = true;
@@ -77,6 +78,14 @@ export class ItemsPageComponent {
       filterAll: 'All items',
       filterHasImage: 'With image',
       filterNoImage: 'No image',
+      overviewTitle: 'Pantry overview',
+      overviewSubtitle: 'Track freshness, restocks, and what needs attention.',
+      totalItems: 'Total items',
+      totalItemsDesc: 'Synced',
+      expiringSoon: 'Expiring soon',
+      expiringSoonDesc: 'Within {days} days',
+      overdue: 'Overdue',
+      overdueDesc: 'Expired',
       clearSearch: 'Clear',
       sortName: 'Name',
       sortBestBefore: 'EXP',
@@ -143,6 +152,14 @@ export class ItemsPageComponent {
       filterAll: 'Alle Artikel',
       filterHasImage: 'Mit Bild',
       filterNoImage: 'Ohne Bild',
+      overviewTitle: 'Pantry-Übersicht',
+      overviewSubtitle: 'Frische, Nachschub und fällige Artikel im Blick behalten.',
+      totalItems: 'Artikel',
+      totalItemsDesc: 'Gesamt',
+      expiringSoon: 'Bald fällig',
+      expiringSoonDesc: 'In {days} Tagen',
+      overdue: 'Abgelaufen',
+      overdueDesc: 'MHD überschritten',
       clearSearch: 'Leeren',
       sortName: 'Name',
       sortBestBefore: 'MHD',
@@ -593,6 +610,25 @@ export class ItemsPageComponent {
 
   t(key: string): string {
     return this.translations[this.locale][key] ?? key;
+  }
+
+  expiringSoonDesc(): string {
+    return this.t('expiringSoonDesc').replace('{days}', String(this.expiringSoonDays));
+  }
+
+  get totalCount(): number {
+    return this.items.length;
+  }
+
+  get overdueCount(): number {
+    return this.items.filter((item) => this.bestBeforeDeltaDays(item.bestBefore) < 0).length;
+  }
+
+  get expiringSoonCount(): number {
+    return this.items.filter((item) => {
+      const delta = this.bestBeforeDeltaDays(item.bestBefore);
+      return delta >= 0 && delta <= this.expiringSoonDays;
+    }).length;
   }
 
   setLocale(locale: Locale): void {

@@ -10,13 +10,13 @@ import { AuthService } from './core/auth/auth.service';
   template: `
     <div data-theme="cupcake" class="min-h-screen">
       <ng-container *ngIf="ready; else loading">
-        <main class="mx-auto w-[min(1100px,calc(100%-2rem))] pt-16 pb-12" *ngIf="canRender; else blocked">
+        <main class="mx-auto w-[min(1100px,calc(100%-2rem))] pt-20 pb-12" *ngIf="canRender; else blocked">
           <app-items-page></app-items-page>
         </main>
         <ng-template #blocked></ng-template>
       </ng-container>
       <ng-template #loading>
-        <main class="mx-auto w-[min(1100px,calc(100%-2rem))] pt-16 pb-12">
+        <main class="mx-auto w-[min(1100px,calc(100%-2rem))] pt-20 pb-12">
           <div class="flex items-center gap-2 opacity-70">
             <span class="loading loading-spinner loading-sm"></span>
             <span class="text-sm">Loading session...</span>
