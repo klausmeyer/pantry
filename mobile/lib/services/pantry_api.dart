@@ -9,13 +9,25 @@ import 'package:mime/mime.dart';
 import '../config.dart';
 import '../models/item.dart';
 
-Future<List<Item>> fetchItems(String? accessToken) async {
-  final uri = Uri.parse('$apiBaseUrl/api/items');
+Future<List<Item>> fetchItems(
+  String? accessToken, {
+  String sortBy = 'best_before',
+  String sortOrder = 'asc',
+  String? search,
+  bool? hasImage,
+}) async {
+  final sort = sortOrder == 'desc' ? '-$sortBy' : sortBy;
+  final params = <String, String>{'sort': sort};
+  final trimmedSearch = search?.trim() ?? '';
+  if (trimmedSearch.isNotEmpty) {
+    params['q'] = trimmedSearch;
+  }
+  if (hasImage != null) {
+    params['filter[has_image]'] = hasImage ? 'true' : 'false';
+  }
+  final uri = Uri.parse('$apiBaseUrl/api/items').replace(queryParameters: params);
   final headers = _jsonApiHeaders(accessToken: accessToken);
-  final response = await http.get(
-    uri,
-    headers: headers,
-  );
+  final response = await http.get(uri, headers: headers);
 
   if (response.statusCode < 200 || response.statusCode >= 300) {
     throw Exception('API error: ${response.statusCode} ${response.reasonPhrase}');

@@ -28,6 +28,7 @@ class AuthenticatedHome extends StatefulWidget {
 
 class _AuthenticatedHomeState extends State<AuthenticatedHome> {
   final _authService = AuthService();
+  final _searchController = TextEditingController();
 
   AuthState? _authState;
   bool _isBootstrapping = true;
@@ -35,6 +36,10 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
   String? _authError;
   Timer? _refreshTimer;
   Future<List<Item>>? _itemsFuture;
+  ItemSortBy _sortBy = ItemSortBy.bestBefore;
+  SortOrder _sortOrder = SortOrder.asc;
+  ImageFilter _imageFilter = ImageFilter.all;
+  String _searchTerm = '';
 
   @override
   void initState() {
@@ -152,7 +157,13 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
     if (accessToken == null || accessToken.isEmpty) {
       throw Exception('Missing access token. Please sign in again.');
     }
-    return fetchItems(accessToken);
+    return fetchItems(
+      accessToken,
+      sortBy: _sortByParam(_sortBy),
+      sortOrder: _sortOrder == SortOrder.desc ? 'desc' : 'asc',
+      search: _searchTerm,
+      hasImage: _hasImageFilter(_imageFilter),
+    );
   }
 
   Future<T> _withAccessToken<T>(Future<T> Function(String token) action) async {
@@ -171,6 +182,27 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
 
   Future<void> _reloadItems() async {
     setState(() {
+      _itemsFuture = _loadItems();
+    });
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchTerm = value;
+    });
+  }
+
+  void _submitSearch() {
+    setState(() {
+      _searchTerm = _searchController.text.trim();
+      _itemsFuture = _loadItems();
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _searchTerm = '';
       _itemsFuture = _loadItems();
     });
   }
@@ -308,6 +340,7 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -354,21 +387,163 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                     if (items.isEmpty) {
                       return EmptyState(onCreate: _openCreate);
                     }
-                    return ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: items.length + 1,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          final profile = _authState?.profile;
-                          return Card(
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: items.length + 1,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      final profile = _authState?.profile;
+                      return Column(
+                        children: [
+                          Card(
                             child: ListTile(
-                              leading: const Icon(Icons.account_circle_outlined),
+                              leading:
+                                  const Icon(Icons.account_circle_outlined),
                               title: Text(profile?.displayName ?? 'Signed in'),
                               subtitle: Text(profile?.email ?? 'Token active'),
                             ),
-                          );
-                        }
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _searchController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Search',
+                                            hintText: 'Search items',
+                                            prefixIcon: const Icon(
+                                              Icons.search_outlined,
+                                            ),
+                                            suffixIcon: _searchTerm.isEmpty
+                                                ? null
+                                                : IconButton(
+                                                    onPressed: _clearSearch,
+                                                    icon: const Icon(
+                                                      Icons.close_rounded,
+                                                    ),
+                                                  ),
+                                            border: const OutlineInputBorder(),
+                                          ),
+                                          onChanged: _onSearchChanged,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        onPressed: _submitSearch,
+                                        icon: const Icon(Icons.send_outlined),
+                                        tooltip: 'Search',
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child:
+                                                DropdownButtonFormField<ItemSortBy>(
+                                              value: _sortBy,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Sort by',
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              items: ItemSortBy.values
+                                                  .map(
+                                                    (value) =>
+                                                        DropdownMenuItem(
+                                                      value: value,
+                                                      child: Text(
+                                                        _sortByLabel(value),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                              onChanged: (value) {
+                                                if (value == null) {
+                                                  return;
+                                                }
+                                                setState(() {
+                                                  _sortBy = value;
+                                                  _itemsFuture = _loadItems();
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: DropdownButtonFormField<
+                                                ImageFilter>(
+                                              value: _imageFilter,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Filter',
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              items: ImageFilter.values
+                                                  .map(
+                                                    (value) =>
+                                                        DropdownMenuItem(
+                                                      value: value,
+                                                      child: Text(
+                                                        _filterLabel(value),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                              onChanged: (value) {
+                                                if (value == null) {
+                                                  return;
+                                                }
+                                                setState(() {
+                                                  _imageFilter = value;
+                                                  _itemsFuture = _loadItems();
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              _sortOrder =
+                                                  _sortOrder == SortOrder.asc
+                                                      ? SortOrder.desc
+                                                      : SortOrder.asc;
+                                              _itemsFuture = _loadItems();
+                                            });
+                                          },
+                                          icon: Icon(
+                                            _sortOrder == SortOrder.asc
+                                                ? Icons.arrow_upward
+                                                : Icons.arrow_downward,
+                                          ),
+                                          label: Text(
+                                            _sortOrder == SortOrder.asc
+                                                ? 'Ascending'
+                                                : 'Descending',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
                         final item = items[index - 1];
                         return Stack(
                           children: [
@@ -441,8 +616,74 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                         );
                       },
                     );
-                  },
-                ),
+              },
+            ),
     );
   }
+}
+
+enum ItemSortBy {
+  name,
+  bestBefore,
+  createdAt,
+  updatedAt,
+}
+
+enum SortOrder {
+  asc,
+  desc,
+}
+
+enum ImageFilter {
+  all,
+  hasImage,
+  noImage,
+}
+
+String _sortByParam(ItemSortBy sortBy) {
+  switch (sortBy) {
+    case ItemSortBy.name:
+      return 'name';
+    case ItemSortBy.bestBefore:
+      return 'best_before';
+    case ItemSortBy.createdAt:
+      return 'created_at';
+    case ItemSortBy.updatedAt:
+      return 'updated_at';
+  }
+}
+
+String _sortByLabel(ItemSortBy sortBy) {
+  switch (sortBy) {
+    case ItemSortBy.name:
+      return 'Name';
+    case ItemSortBy.bestBefore:
+      return 'EXP';
+    case ItemSortBy.createdAt:
+      return 'Created';
+    case ItemSortBy.updatedAt:
+      return 'Updated';
+  }
+}
+
+String _filterLabel(ImageFilter filter) {
+  switch (filter) {
+    case ImageFilter.all:
+      return 'All items';
+    case ImageFilter.hasImage:
+      return 'With image';
+    case ImageFilter.noImage:
+      return 'No image';
+  }
+}
+
+bool? _hasImageFilter(ImageFilter filter) {
+  final value = filter;
+  if (value == ImageFilter.hasImage) {
+    return true;
+  }
+  if (value == ImageFilter.noImage) {
+    return false;
+  }
+  return null;
 }
