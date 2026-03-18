@@ -74,6 +74,11 @@ iOS (`mobile/ios/Runner/Info.plist`) add:
 
 If you prefer a different scheme, update both the redirect URI and these entries.
 
+## Token Storage
+
+Access, ID, and refresh tokens are stored with `flutter_secure_storage`, which uses
+Keychain on iOS and the Android Keystore-backed storage on Android.
+
 ## Notes
 
 - This app is intentionally minimal right now and will be expanded as the backend and API stabilize.
