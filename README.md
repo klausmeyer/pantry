@@ -10,6 +10,8 @@ Pantry helps you track household food supplies with a JSON:API backend and an An
   See [`backend/README.md`](backend/README.md)
 - `frontend/` - Angular UI (Tailwind + DaisyUI)  
   See [`frontend/README.md`](frontend/README.md)
+- `mobile/` - Flutter mobile app  
+  See [`mobile/README.md`](mobile/README.md)
 - `misc/helm/pantry/` - Helm chart for Kubernetes deployments  
   See [`misc/helm/pantry/README.md`](misc/helm/pantry/README.md)
 - `misc/` - helper scripts (for example CSV import tooling)
