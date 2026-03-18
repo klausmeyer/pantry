@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 
 const String apiBaseUrl = String.fromEnvironment(
   'PANTRY_API_BASE_URL',
@@ -218,6 +220,9 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
           onSave: (draft) => _withAccessToken(
             (token) => createItem(token, draft),
           ),
+          onUploadImage: (file) => _withAccessToken(
+            (token) => uploadImage(token, file),
+          ),
         ),
       ),
     );
@@ -234,6 +239,9 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
           initial: item,
           onSave: (draft) => _withAccessToken(
             (token) => updateItem(token, item.id, draft),
+          ),
+          onUploadImage: (file) => _withAccessToken(
+            (token) => uploadImage(token, file),
           ),
         ),
       ),
@@ -283,6 +291,54 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
         SnackBar(content: Text('Delete failed: $error')),
       );
     }
+  }
+
+  Future<void> _viewImage(Item item) async {
+    if (item.pictureKey == null || item.pictureKey!.isEmpty) {
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(item.name),
+          content: FutureBuilder<String>(
+            future: _withAccessToken(
+              (token) => fetchPreviewUrl(token, item.pictureKey!),
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return Text('Unable to load image: ${snapshot.error}');
+              }
+              final url = snapshot.data;
+              if (url == null || url.isEmpty) {
+                return const Text('No preview available.');
+              }
+              return Image.network(
+                url,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Text('Image failed to load: $error');
+                },
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -358,6 +414,13 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (item.pictureKey != null &&
+                                item.pictureKey!.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.image_outlined),
+                                tooltip: 'View image',
+                                onPressed: () => _viewImage(item),
+                              ),
                             IconButton(
                               icon: const Icon(Icons.edit),
                               tooltip: 'Edit',
@@ -535,6 +598,7 @@ class Item {
     required this.contentUnit,
     required this.packaging,
     required this.comment,
+    required this.pictureKey,
   });
 
   final String id;
@@ -544,6 +608,7 @@ class Item {
   final String? contentUnit;
   final String? packaging;
   final String? comment;
+  final String? pictureKey;
 
   String get subtitle {
     final parts = <String>[];
@@ -572,6 +637,7 @@ class Item {
       contentUnit: attributes['content_unit']?.toString(),
       packaging: attributes['packaging']?.toString(),
       comment: attributes['comment']?.toString(),
+      pictureKey: attributes['picture_key']?.toString(),
     );
   }
 }
@@ -584,6 +650,8 @@ class ItemDraft {
     required this.contentUnit,
     required this.packaging,
     required this.comment,
+    required this.pictureKey,
+    required this.clearPicture,
   });
 
   final String name;
@@ -592,6 +660,8 @@ class ItemDraft {
   final String? contentUnit;
   final String? packaging;
   final String? comment;
+  final String? pictureKey;
+  final bool clearPicture;
 
   Map<String, dynamic> toAttributes() {
     final attributes = <String, dynamic>{
@@ -612,11 +682,17 @@ class ItemDraft {
     if (comment != null && comment!.isNotEmpty) {
       attributes['comment'] = comment;
     }
+    if (pictureKey != null && pictureKey!.isNotEmpty) {
+      attributes['picture_key'] = pictureKey;
+    } else if (clearPicture) {
+      attributes['picture_key'] = null;
+    }
     return attributes;
   }
 }
 
 typedef ItemSaveHandler = Future<Item> Function(ItemDraft draft);
+typedef ImageUploadHandler = Future<String> Function(XFile file);
 
 class ItemFormPage extends StatefulWidget {
   const ItemFormPage({
@@ -624,11 +700,13 @@ class ItemFormPage extends StatefulWidget {
     required this.title,
     required this.initial,
     required this.onSave,
+    required this.onUploadImage,
   });
 
   final String title;
   final Item? initial;
   final ItemSaveHandler onSave;
+  final ImageUploadHandler onUploadImage;
 
   @override
   State<ItemFormPage> createState() => _ItemFormPageState();
@@ -642,6 +720,9 @@ class _ItemFormPageState extends State<ItemFormPage> {
   final _commentController = TextEditingController();
   String? _packaging;
   String? _contentUnit;
+  String? _pictureKey;
+  bool _clearPicture = false;
+  XFile? _selectedImage;
   bool _isSaving = false;
   String? _errorMessage;
 
@@ -672,6 +753,7 @@ class _ItemFormPageState extends State<ItemFormPage> {
       _commentController.text = item.comment ?? '';
       _packaging = item.packaging;
       _contentUnit = item.contentUnit;
+      _pictureKey = item.pictureKey;
     }
   }
 
@@ -759,6 +841,12 @@ class _ItemFormPageState extends State<ItemFormPage> {
       final contentAmount = _contentAmountController.text.trim().isEmpty
           ? null
           : num.tryParse(_contentAmountController.text.trim());
+      var pictureKey = _pictureKey;
+      var clearPicture = _clearPicture;
+      if (_selectedImage != null) {
+        pictureKey = await widget.onUploadImage(_selectedImage!);
+        clearPicture = false;
+      }
       final draft = ItemDraft(
         name: _nameController.text.trim(),
         bestBefore: _bestBeforeController.text.trim().isEmpty
@@ -770,6 +858,8 @@ class _ItemFormPageState extends State<ItemFormPage> {
         comment: _commentController.text.trim().isEmpty
             ? null
             : _commentController.text.trim(),
+        pictureKey: pictureKey,
+        clearPicture: clearPicture,
       );
       final saved = await widget.onSave(draft);
       if (!mounted) {
@@ -787,6 +877,26 @@ class _ItemFormPageState extends State<ItemFormPage> {
         });
       }
     }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      return;
+    }
+    setState(() {
+      _selectedImage = image;
+      _clearPicture = false;
+    });
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+      _pictureKey = null;
+      _clearPicture = true;
+    });
   }
 
   @override
@@ -881,6 +991,32 @@ class _ItemFormPageState extends State<ItemFormPage> {
                 ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 16),
+              Text(
+                'Picture',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  FilledButton.icon(
+                    onPressed: _isSaving ? null : _pickImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Select image'),
+                  ),
+                  const SizedBox(width: 12),
+                  if (_selectedImage != null || _pictureKey != null)
+                    TextButton(
+                      onPressed: _isSaving ? null : _removeImage,
+                      child: const Text('Remove'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_selectedImage != null)
+                Text('Selected: ${_selectedImage!.name}'),
+              if (_selectedImage == null && _pictureKey != null)
+                Text('Existing: ${_pictureKey!}'),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -1094,6 +1230,18 @@ Future<List<Item>> fetchItems(String? accessToken) async {
       .toList();
 }
 
+class UploadInfo {
+  UploadInfo({
+    required this.pictureKey,
+    required this.uploadUrl,
+    required this.headers,
+  });
+
+  final String pictureKey;
+  final String uploadUrl;
+  final Map<String, String> headers;
+}
+
 Future<Item> createItem(String accessToken, ItemDraft draft) async {
   final uri = Uri.parse('$apiBaseUrl/api/items');
   final body = jsonEncode({
@@ -1138,14 +1286,97 @@ Future<void> deleteItem(String accessToken, String id) async {
   }
 }
 
+Future<String> uploadImage(String accessToken, XFile file) async {
+  final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
+  final contentType =
+      file.mimeType ?? lookupMimeType(file.path) ?? 'image/jpeg';
+  final upload = await createUpload(accessToken, filename, contentType);
+  final bytes = await file.readAsBytes();
+  await uploadToPresignedUrl(upload, bytes);
+  return upload.pictureKey;
+}
+
+Future<UploadInfo> createUpload(
+  String accessToken,
+  String filename,
+  String contentType,
+) async {
+  final uri = Uri.parse('$apiBaseUrl/api/uploads');
+  final response = await http.post(
+    uri,
+    headers: _jsonApiHeaders(
+      accessToken: accessToken,
+      includeContentType: false,
+      overrideContentType: 'application/json',
+    ),
+    body: jsonEncode({
+      'filename': filename,
+      'content_type': contentType,
+    }),
+  );
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw Exception('Upload init failed: ${response.statusCode} ${response.reasonPhrase}');
+  }
+
+  final payload = jsonDecode(response.body) as Map<String, dynamic>;
+  final data = payload['data'] as Map<String, dynamic>? ?? {};
+  final attributes = data['attributes'] as Map<String, dynamic>? ?? {};
+  final headersRaw = attributes['headers'] as Map<String, dynamic>? ?? {};
+  final headers = headersRaw.map(
+    (key, value) => MapEntry(key.toString(), value.toString()),
+  );
+
+  return UploadInfo(
+    pictureKey: attributes['picture_key']?.toString() ?? '',
+    uploadUrl: attributes['upload_url']?.toString() ?? '',
+    headers: headers,
+  );
+}
+
+Future<void> uploadToPresignedUrl(UploadInfo upload, List<int> bytes) async {
+  final response = await http.put(
+    Uri.parse(upload.uploadUrl),
+    headers: upload.headers,
+    body: bytes,
+  );
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw Exception('Upload failed: ${response.statusCode} ${response.reasonPhrase}');
+  }
+}
+
+Future<String> fetchPreviewUrl(String accessToken, String pictureKey) async {
+  final uri = Uri.parse('$apiBaseUrl/api/uploads/preview')
+      .replace(queryParameters: {'picture_key': pictureKey});
+  final response = await http.get(
+    uri,
+    headers: _jsonApiHeaders(accessToken: accessToken),
+  );
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw Exception(
+      'Preview failed: ${response.statusCode} ${response.reasonPhrase}',
+    );
+  }
+
+  final payload = jsonDecode(response.body) as Map<String, dynamic>;
+  final data = payload['data'] as Map<String, dynamic>? ?? {};
+  final attributes = data['attributes'] as Map<String, dynamic>? ?? {};
+  return attributes['preview_url']?.toString() ?? '';
+}
+
 Map<String, String> _jsonApiHeaders({
   String? accessToken,
   bool includeContentType = false,
+  String? overrideContentType,
 }) {
   final headers = <String, String>{
     'accept': 'application/vnd.api+json',
   };
-  if (includeContentType) {
+  if (overrideContentType != null) {
+    headers['content-type'] = overrideContentType;
+  } else if (includeContentType) {
     headers['content-type'] = 'application/vnd.api+json';
   }
   if (accessToken != null && accessToken.isNotEmpty) {
