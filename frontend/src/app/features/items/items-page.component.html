@@ -30,7 +30,33 @@
   </div>
 </section>
 
-<section class="mb-4 flex flex-wrap items-end gap-3">
+<section class="mb-6">
+  <div class="flex flex-wrap items-end gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-[0.3em] text-base-content/60">Pantry</p>
+      <h1 class="text-3xl font-semibold">{{ t('overviewTitle') }}</h1>
+      <p class="mt-1 text-sm text-base-content/70">{{ t('overviewSubtitle') }}</p>
+    </div>
+    <div class="ml-auto w-full max-w-xl flex justify-end">
+      <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-200/80 w-full">
+        <div class="stat flex-1 text-center">
+          <div class="stat-title">{{ t('totalItems') }}</div>
+          <div class="stat-value text-primary text-center">{{ totalCount }}</div>
+        </div>
+        <div class="stat flex-1 text-center">
+          <div class="stat-title">{{ t('expiringSoon') }}</div>
+          <div class="stat-value text-warning text-center">{{ expiringSoonCount }}</div>
+        </div>
+        <div class="stat flex-1 text-center">
+          <div class="stat-title">{{ t('overdue') }}</div>
+          <div class="stat-value text-error text-center">{{ overdueCount }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-4 rounded-box bg-base-200/60 p-4 shadow flex flex-wrap items-end gap-3">
   <div class="form-control w-auto self-end">
     <div class="label py-1">
       <span class="label-text invisible">Action</span>

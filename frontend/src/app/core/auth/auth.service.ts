@@ -24,12 +24,13 @@ export class AuthService {
       authority: this.config.issuer,
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
+      silent_redirect_uri: this.config.silentRedirectUri,
       post_logout_redirect_uri: this.config.postLogoutRedirectUri,
       response_type: 'code',
       scope: this.config.scope,
       userStore: new WebStorageStateStore({ store: window.localStorage }),
       monitorSession: false,
-      automaticSilentRenew: false
+      automaticSilentRenew: this.config.silentRenewEnabled
     });
 
     this.manager.events.addUserLoaded((user: User) => {
