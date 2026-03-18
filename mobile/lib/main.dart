@@ -930,6 +930,18 @@ class _ItemFormPageState extends State<ItemFormPage> {
     });
   }
 
+  Future<void> _takePhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.camera);
+    if (image == null) {
+      return;
+    }
+    setState(() {
+      _selectedImage = image;
+      _clearPicture = false;
+    });
+  }
+
   void _removeImage() {
     setState(() {
       _selectedImage = null;
@@ -1042,6 +1054,12 @@ class _ItemFormPageState extends State<ItemFormPage> {
                     onPressed: _isSaving ? null : _pickImage,
                     icon: const Icon(Icons.photo_library_outlined),
                     label: const Text('Select image'),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.icon(
+                    onPressed: _isSaving ? null : _takePhoto,
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: const Text('Take photo'),
                   ),
                   const SizedBox(width: 12),
                   if (_selectedImage != null || _pictureKey != null)

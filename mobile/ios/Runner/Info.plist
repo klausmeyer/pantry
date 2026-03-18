@@ -17,6 +17,8 @@
 	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Pantry Mobile</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Pantry needs camera access to take item pictures.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Pantry needs access to your photos to upload item pictures.</string>
 	<key>CFBundleExecutable</key>

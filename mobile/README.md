@@ -89,13 +89,16 @@ If you prefer a different scheme, update both the redirect URI and these entries
   - JPEG/WebP quality: `0.85`
   - PNG stays lossless
 - Supported upload types follow the backend (jpeg/jpg/png/webp/gif).
+- You can select an image from the gallery or take a new photo with the camera.
 
 ## iOS Photo Permission
 
-The app uses the photo library picker for image uploads. Ensure the usage
-string is present in `mobile/ios/Runner/Info.plist`:
+The app uses the photo library picker and camera for image uploads. Ensure the
+usage strings are present in `mobile/ios/Runner/Info.plist`:
 
 ```xml
+<key>NSCameraUsageDescription</key>
+<string>Pantry needs camera access to take item pictures.</string>
 <key>NSPhotoLibraryUsageDescription</key>
 <string>Pantry needs access to your photos to upload item pictures.</string>
 ```
