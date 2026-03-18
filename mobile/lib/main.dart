@@ -1245,7 +1245,12 @@ class AuthService {
     );
 
     if (state.isExpired && refreshToken != null) {
-      state = await refresh(refreshToken);
+      try {
+        state = await refresh(refreshToken);
+      } catch (_) {
+        await clear();
+        return null;
+      }
     }
 
     return state;
@@ -1323,8 +1328,13 @@ class AuthService {
   }
 
   Future<String?> getValidAccessToken() async {
-    final state = await load();
-    return state?.accessToken;
+    try {
+      final state = await load();
+      return state?.accessToken;
+    } catch (_) {
+      await clear();
+      return null;
+    }
   }
 }
 
