@@ -68,11 +68,13 @@ export class AuthService {
       }
 
       const user = await this.manager.getUser();
-      this.userSubject.next(user ?? null);
-
-      if (!user) {
+      if (!user || user.expired) {
+        this.userSubject.next(null);
         await this.requireLogin();
+        return;
       }
+
+      this.userSubject.next(user);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'OIDC initialization failed';
       this.errorSubject.next(message);
@@ -95,7 +97,11 @@ export class AuthService {
   }
 
   getAccessToken(): string | null {
-    return this.userSubject.value?.access_token ?? null;
+    const user = this.userSubject.value;
+    if (!user || user.expired) {
+      return null;
+    }
+    return user.access_token ?? null;
   }
 
   private async requireLogin(): Promise<void> {
