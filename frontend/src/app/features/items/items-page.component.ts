@@ -30,6 +30,7 @@ export class ItemsPageComponent {
   sortOrder: SortOrder = 'asc';
   searchTerm = '';
   activeFilter: FilterValue = 'all';
+  viewMode: ViewMode = 'list';
   deletingIds = new Set<string>();
   duplicatingIds = new Set<string>();
   createLoading = false;
@@ -87,6 +88,9 @@ export class ItemsPageComponent {
       overdue: 'Overdue',
       overdueDesc: 'Expired',
       clearSearch: 'Clear',
+      view: 'View',
+      viewList: 'List',
+      viewGrid: 'Grid',
       sortName: 'Name',
       sortBestBefore: 'EXP',
       sortCreatedAt: 'Created at',
@@ -161,6 +165,9 @@ export class ItemsPageComponent {
       overdue: 'Abgelaufen',
       overdueDesc: 'MHD überschritten',
       clearSearch: 'Leeren',
+      view: 'Ansicht',
+      viewList: 'Liste',
+      viewGrid: 'Kacheln',
       sortName: 'Name',
       sortBestBefore: 'MHD',
       sortCreatedAt: 'Erstellt am',
@@ -221,6 +228,7 @@ export class ItemsPageComponent {
 
   constructor() {
     this.locale = this.readLocaleFromCookie();
+    this.viewMode = this.readViewModeFromCookie();
     this.applyLocaleToDocument();
     this.loadItems();
   }
@@ -238,6 +246,11 @@ export class ItemsPageComponent {
   onFilterChange(filter: string): void {
     this.activeFilter = filter as FilterValue;
     this.loadItems();
+  }
+
+  setViewMode(mode: ViewMode): void {
+    this.viewMode = mode;
+    this.writeViewModeCookie(mode);
   }
 
   clearSearch(): void {
@@ -766,9 +779,27 @@ export class ItemsPageComponent {
     return browser.startsWith('de') ? 'de' : 'en';
   }
 
+  private readViewModeFromCookie(): ViewMode {
+    const cookie = this.document.cookie
+      .split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith('pantry_view='));
+
+    const fromCookie = cookie?.split('=')[1] ?? '';
+    if (fromCookie === 'list' || fromCookie === 'grid') {
+      return fromCookie;
+    }
+    return 'list';
+  }
+
   private writeLocaleCookie(locale: Locale): void {
     const maxAge = 60 * 60 * 24 * 365;
     this.document.cookie = `pantry_locale=${locale}; path=/; max-age=${maxAge}; samesite=lax`;
+  }
+
+  private writeViewModeCookie(mode: ViewMode): void {
+    const maxAge = 60 * 60 * 24 * 365;
+    this.document.cookie = `pantry_view=${mode}; path=/; max-age=${maxAge}; samesite=lax`;
   }
 
   private applyLocaleToDocument(): void {
@@ -778,3 +809,4 @@ export class ItemsPageComponent {
 
 type Locale = 'en' | 'de';
 type FilterValue = 'all' | 'has_image:true' | 'has_image:false';
+type ViewMode = 'list' | 'grid';
