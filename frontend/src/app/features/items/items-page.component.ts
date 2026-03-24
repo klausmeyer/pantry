@@ -1,5 +1,5 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { Observable, catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
 import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';
@@ -341,6 +341,29 @@ export class ItemsPageComponent {
         this.previewError = this.t('previewFailed');
       }
     });
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent): void {
+    if (!this.showCreateModal && !this.showEditModal && !this.showPreviewModal) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (this.showPreviewModal) {
+      this.closePreviewModal();
+      return;
+    }
+
+    if (this.showEditModal) {
+      this.closeEditModal();
+      return;
+    }
+
+    if (this.showCreateModal) {
+      this.closeCreateModal();
+    }
   }
 
   closePreviewModal(): void {
