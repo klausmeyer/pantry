@@ -47,9 +47,15 @@ func (s *ItemService) Create(ctx context.Context, input CreateItemInput) (item.I
 		return item.Item{}, err
 	}
 
+	tagNumber, err := s.repo.NextInventoryTag(ctx)
+	if err != nil {
+		return item.Item{}, err
+	}
+
 	now := time.Now().UTC()
 	created := item.Item{
 		ID:            s.ids.New(),
+		InventoryTag:  id.EncodeCrockfordBase32(uint64(tagNumber), id.InventoryTagLength),
 		Name:          strings.TrimSpace(input.Name),
 		BestBefore:    input.BestBefore,
 		ContentAmount: input.ContentAmount,
@@ -80,6 +86,7 @@ func (s *ItemService) Update(ctx context.Context, id string, input CreateItemInp
 	now := time.Now().UTC()
 	updated := item.Item{
 		ID:            strings.TrimSpace(id),
+		InventoryTag:  existing.InventoryTag,
 		Name:          strings.TrimSpace(input.Name),
 		BestBefore:    input.BestBefore,
 		ContentAmount: input.ContentAmount,

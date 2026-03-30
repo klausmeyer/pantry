@@ -1,6 +1,7 @@
 class Item {
   Item({
     required this.id,
+    required this.inventoryTag,
     required this.name,
     required this.bestBefore,
     required this.contentAmount,
@@ -11,6 +12,7 @@ class Item {
   });
 
   final String id;
+  final String inventoryTag;
   final String name;
   final String? bestBefore;
   final num? contentAmount;
@@ -37,6 +39,7 @@ class Item {
     final attributes = json['attributes'] as Map<String, dynamic>? ?? {};
     return Item(
       id: json['id']?.toString() ?? '',
+      inventoryTag: attributes['inventory_tag']?.toString() ?? '',
       name: attributes['name']?.toString() ?? 'Unnamed item',
       bestBefore: attributes['best_before']?.toString(),
       contentAmount: attributes['content_amount'] as num?,

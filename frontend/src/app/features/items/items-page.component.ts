@@ -38,6 +38,7 @@ export class ItemsPageComponent {
   showCreateModal = false;
   showEditModal = false;
   showPreviewModal = false;
+  showDetailsModal = false;
   editLoading = false;
   editError = '';
   editingItemId = '';
@@ -50,6 +51,7 @@ export class ItemsPageComponent {
   previewLoading = false;
   previewError = '';
   previewItemName = '';
+  detailsItem: Item | null = null;
   newItem: CreateItemInput = {
     name: '',
     bestBefore: '',
@@ -125,6 +127,11 @@ export class ItemsPageComponent {
       previewLoading: 'Loading preview...',
       previewMissing: 'No picture uploaded yet.',
       previewFailed: 'Failed to load preview.',
+      details: 'Details',
+      detailsTitle: 'Item details',
+      inventoryTag: 'Inventory tag',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
       removePicture: 'Remove picture',
       duplicate: 'Duplicate',
       edit: 'Edit',
@@ -202,6 +209,11 @@ export class ItemsPageComponent {
       previewLoading: 'Vorschau wird geladen...',
       previewMissing: 'Noch kein Bild hochgeladen.',
       previewFailed: 'Vorschau konnte nicht geladen werden.',
+      details: 'Details',
+      detailsTitle: 'Artikeldetails',
+      inventoryTag: 'Inventar-Tag',
+      createdAt: 'Erstellt am',
+      updatedAt: 'Aktualisiert am',
       removePicture: 'Bild entfernen',
       duplicate: 'Duplizieren',
       edit: 'Bearbeiten',
@@ -331,6 +343,10 @@ export class ItemsPageComponent {
   }
 
   openPreviewModal(item: Item): void {
+    if (this.showDetailsModal) {
+      this.showDetailsModal = false;
+      this.detailsItem = null;
+    }
     this.previewError = '';
     this.previewItemName = item.name;
     this.previewUrl = null;
@@ -356,9 +372,15 @@ export class ItemsPageComponent {
     });
   }
 
+  openDetailsModal(item: Item): void {
+    this.detailsItem = item;
+    this.showDetailsModal = true;
+    this.updateModalScrollLock();
+  }
+
   @HostListener('document:keydown.escape', ['$event'])
   onEscapeKey(event: KeyboardEvent): void {
-    if (!this.showCreateModal && !this.showEditModal && !this.showPreviewModal) {
+    if (!this.showCreateModal && !this.showEditModal && !this.showPreviewModal && !this.showDetailsModal) {
       return;
     }
 
@@ -366,6 +388,11 @@ export class ItemsPageComponent {
 
     if (this.showPreviewModal) {
       this.closePreviewModal();
+      return;
+    }
+
+    if (this.showDetailsModal) {
+      this.closeDetailsModal();
       return;
     }
 
@@ -388,6 +415,12 @@ export class ItemsPageComponent {
     this.previewUrl = null;
     this.previewItemName = '';
     this.previewError = '';
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.detailsItem = null;
+    this.updateModalScrollLock();
   }
 
   createItem(): void {
@@ -750,7 +783,7 @@ export class ItemsPageComponent {
 
 
   private updateModalScrollLock(): void {
-    const anyOpen = this.showCreateModal || this.showEditModal || this.showPreviewModal;
+    const anyOpen = this.showCreateModal || this.showEditModal || this.showPreviewModal || this.showDetailsModal;
     const body = this.document.body;
     const html = this.document.documentElement;
 

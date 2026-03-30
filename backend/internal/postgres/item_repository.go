@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/klausmeyer/pantry/backend/internal/domain/item"
+	"github.com/klausmeyer/pantry/backend/internal/id"
 	"github.com/klausmeyer/pantry/backend/internal/repository"
 )
 
@@ -23,8 +24,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE SEQUENCE IF NOT EXISTS inventory_tag_seq;
+
 CREATE TABLE IF NOT EXISTS items (
   id TEXT PRIMARY KEY,
+  inventory_tag TEXT UNIQUE,
   name TEXT NOT NULL,
   best_before DATE NOT NULL,
   content_amount DOUBLE PRECISION NOT NULL,
@@ -67,16 +71,29 @@ ADD COLUMN IF NOT EXISTS search_text TEXT;
 const ensureSearchTextTriggerSQL = `
 CREATE OR REPLACE FUNCTION items_search_text() RETURNS trigger AS $$
 BEGIN
-  NEW.search_text := unaccent(lower(coalesce(NEW.name, '') || ' ' || coalesce(NEW.comment, '')));
+  NEW.search_text := unaccent(lower(coalesce(NEW.name, '') || ' ' || coalesce(NEW.comment, '') || ' ' || coalesce(NEW.inventory_tag, '')));
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS items_search_text_trigger ON items;
 CREATE TRIGGER items_search_text_trigger
-BEFORE INSERT OR UPDATE OF name, comment ON items
+BEFORE INSERT OR UPDATE OF name, comment, inventory_tag ON items
 FOR EACH ROW
 EXECUTE FUNCTION items_search_text();
+`
+
+const ensureInventoryTagColumnSQL = `
+ALTER TABLE items
+ADD COLUMN IF NOT EXISTS inventory_tag TEXT;
+`
+
+const ensureInventoryTagSequenceSQL = `
+CREATE SEQUENCE IF NOT EXISTS inventory_tag_seq;
+`
+
+const ensureInventoryTagUniqueIndexSQL = `
+CREATE UNIQUE INDEX IF NOT EXISTS items_inventory_tag_key ON items (inventory_tag);
 `
 
 const allowNullPictureKeySQL = `
@@ -111,8 +128,17 @@ func (r *ItemRepository) ensureSchema(ctx context.Context) error {
 	if _, err := r.db.ExecContext(ctx, ensureUnaccentExtensionSQL); err != nil {
 		return fmt.Errorf("ensure unaccent extension: %w", err)
 	}
+	if _, err := r.db.ExecContext(ctx, ensureInventoryTagSequenceSQL); err != nil {
+		return fmt.Errorf("ensure inventory tag sequence: %w", err)
+	}
 	if _, err := r.db.ExecContext(ctx, ensurePackagingColumnSQL); err != nil {
 		return fmt.Errorf("ensure packaging column: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, ensureInventoryTagColumnSQL); err != nil {
+		return fmt.Errorf("ensure inventory tag column: %w", err)
+	}
+	if _, err := r.db.ExecContext(ctx, ensureInventoryTagUniqueIndexSQL); err != nil {
+		return fmt.Errorf("ensure inventory tag unique index: %w", err)
 	}
 	if _, err := r.db.ExecContext(ctx, ensureDeletedAtColumnSQL); err != nil {
 		return fmt.Errorf("ensure deleted_at column: %w", err)
@@ -129,20 +155,24 @@ func (r *ItemRepository) ensureSchema(ctx context.Context) error {
 	if _, err := r.db.ExecContext(ctx, normalizeEmptyPictureKeySQL); err != nil {
 		return fmt.Errorf("normalize picture_key: %w", err)
 	}
+	if err := r.ensureInventoryTags(ctx); err != nil {
+		return fmt.Errorf("ensure inventory tags: %w", err)
+	}
 	return nil
 }
 
 func (r *ItemRepository) Create(ctx context.Context, i item.Item) (item.Item, error) {
 	const query = `
 INSERT INTO items (
-  id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+  id, inventory_tag, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 `
 
 	if _, err := r.db.ExecContext(
 		ctx,
 		query,
 		i.ID,
+		i.InventoryTag,
 		i.Name,
 		i.BestBefore,
 		i.ContentAmount,
@@ -172,11 +202,12 @@ SET
   comment = $8,
   updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING created_at, updated_at;
+RETURNING inventory_tag, created_at, updated_at;
 `
 
 	var createdAt time.Time
 	var updatedAt time.Time
+	var inventoryTag sql.NullString
 	if err := r.db.QueryRowContext(
 		ctx,
 		query,
@@ -188,13 +219,16 @@ RETURNING created_at, updated_at;
 		i.Packaging,
 		i.PictureKey,
 		i.Comment,
-	).Scan(&createdAt, &updatedAt); err != nil {
+	).Scan(&inventoryTag, &createdAt, &updatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return item.Item{}, repository.ErrNotFound
 		}
 		return item.Item{}, fmt.Errorf("update item: %w", err)
 	}
 
+	if inventoryTag.Valid {
+		i.InventoryTag = inventoryTag.String
+	}
 	i.CreatedAt = createdAt
 	i.UpdatedAt = updatedAt
 	return i, nil
@@ -202,7 +236,7 @@ RETURNING created_at, updated_at;
 
 func (r *ItemRepository) GetByID(ctx context.Context, id string) (item.Item, error) {
 	const query = `
-SELECT id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
+SELECT id, inventory_tag, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
 FROM items
 WHERE id = $1 AND deleted_at IS NULL;
 `
@@ -212,10 +246,12 @@ WHERE id = $1 AND deleted_at IS NULL;
 		contentUnit string
 		comment     sql.NullString
 		pictureKey  sql.NullString
+		inventoryTag sql.NullString
 	)
 
 	if err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&i.ID,
+		&inventoryTag,
 		&i.Name,
 		&i.BestBefore,
 		&i.ContentAmount,
@@ -233,6 +269,9 @@ WHERE id = $1 AND deleted_at IS NULL;
 	}
 
 	i.ContentUnit = item.Unit(contentUnit)
+	if inventoryTag.Valid {
+		i.InventoryTag = inventoryTag.String
+	}
 	if pictureKey.Valid {
 		i.PictureKey = &pictureKey.String
 	}
@@ -285,7 +324,7 @@ func (r *ItemRepository) List(ctx context.Context, input repository.ListItemsInp
 	}
 
 	query := fmt.Sprintf(`
-SELECT id, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
+SELECT id, inventory_tag, name, best_before, content_amount, content_unit, packaging, picture_key, comment, created_at, updated_at
 FROM items
 WHERE %s
 ORDER BY %s;
@@ -304,10 +343,12 @@ ORDER BY %s;
 			contentUnit string
 			comment     sql.NullString
 			pictureKey  sql.NullString
+			inventoryTag sql.NullString
 		)
 
 		if err := rows.Scan(
 			&i.ID,
+			&inventoryTag,
 			&i.Name,
 			&i.BestBefore,
 			&i.ContentAmount,
@@ -322,6 +363,9 @@ ORDER BY %s;
 		}
 
 		i.ContentUnit = item.Unit(contentUnit)
+		if inventoryTag.Valid {
+			i.InventoryTag = inventoryTag.String
+		}
 		if pictureKey.Valid {
 			i.PictureKey = &pictureKey.String
 		}
@@ -357,6 +401,83 @@ WHERE id = $1 AND deleted_at IS NULL;
 	}
 	if affected == 0 {
 		return repository.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *ItemRepository) NextInventoryTag(ctx context.Context) (int64, error) {
+	const query = `SELECT nextval('inventory_tag_seq');`
+
+	var next int64
+	if err := r.db.QueryRowContext(ctx, query).Scan(&next); err != nil {
+		return 0, fmt.Errorf("next inventory tag: %w", err)
+	}
+	return next, nil
+}
+
+func (r *ItemRepository) ensureInventoryTags(ctx context.Context) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin inventory tag backfill: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	var needsRebuild bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM items WHERE inventory_tag LIKE '%0%');`).Scan(&needsRebuild); err != nil {
+		return fmt.Errorf("check inventory tag format: %w", err)
+	}
+
+	if needsRebuild {
+		if _, err := tx.ExecContext(ctx, `UPDATE items SET inventory_tag = NULL;`); err != nil {
+			return fmt.Errorf("clear inventory tags: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, `SELECT setval('inventory_tag_seq', 1, false);`); err != nil {
+			return fmt.Errorf("reset inventory tag sequence: %w", err)
+		}
+	}
+
+	rows, err := tx.QueryContext(ctx, `
+SELECT id
+FROM items
+WHERE inventory_tag IS NULL
+ORDER BY created_at ASC, id ASC;
+`)
+	if err != nil {
+		return fmt.Errorf("query missing inventory tags: %w", err)
+	}
+	defer rows.Close()
+
+	ids := make([]string, 0)
+	for rows.Next() {
+		var idValue string
+		if err := rows.Scan(&idValue); err != nil {
+			return fmt.Errorf("scan missing inventory tag id: %w", err)
+		}
+		ids = append(ids, idValue)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate missing inventory tags: %w", err)
+	}
+	rows.Close()
+
+	for _, idValue := range ids {
+		var next int64
+		if err := tx.QueryRowContext(ctx, `SELECT nextval('inventory_tag_seq');`).Scan(&next); err != nil {
+			return fmt.Errorf("next inventory tag: %w", err)
+		}
+
+		tag := id.EncodeCrockfordBase32(uint64(next), id.InventoryTagLength)
+		if _, err := tx.ExecContext(ctx, `UPDATE items SET inventory_tag = $2 WHERE id = $1;`, idValue, tag); err != nil {
+			return fmt.Errorf("update inventory tag: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit inventory tag backfill: %w", err)
 	}
 
 	return nil

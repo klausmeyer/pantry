@@ -36,6 +36,7 @@ type itemAttributes struct {
 	Packaging     string  `json:"packaging"`
 	PictureKey    *string `json:"picture_key"`
 	Comment       *string `json:"comment,omitempty"`
+	InventoryTag  string  `json:"inventory_tag"`
 	CreatedAt     string  `json:"created_at"`
 	UpdatedAt     string  `json:"updated_at"`
 }
@@ -83,6 +84,7 @@ func toItemResource(i item.Item) itemResource {
 			Packaging:     string(i.Packaging),
 			PictureKey:    i.PictureKey,
 			Comment:       i.Comment,
+			InventoryTag:  i.InventoryTag,
 			CreatedAt:     i.CreatedAt.UTC().Format(time.RFC3339),
 			UpdatedAt:     i.UpdatedAt.UTC().Format(time.RFC3339),
 		},
@@ -116,6 +118,7 @@ func (h *ItemsHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func parseListItemsInput(r *http.Request) (service.ListItemsInput, error) {
 	search := strings.TrimSpace(r.URL.Query().Get("q"))
+	search = strings.TrimPrefix(search, "#")
 	imageRaw := strings.TrimSpace(strings.ToLower(r.URL.Query().Get("filter[has_image]")))
 	imageFilter := repository.ImageFilterAll
 	if imageRaw != "" {

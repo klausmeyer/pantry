@@ -67,4 +67,5 @@ Chart usage and configuration are documented in [`misc/helm/pantry/README.md`](m
 
 - API media type: `application/vnd.api+json`
 - Default local API URL: `http://localhost:4000`
+- Item attributes include `inventory_tag` (auto-generated 4-character tag, searchable via `q`, with optional `#` prefix).
 - This repository follows the goals and scope described in [`INSTRUCTIONS.md`](INSTRUCTIONS.md)

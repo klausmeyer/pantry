@@ -2,13 +2,16 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 
 CREATE OR REPLACE FUNCTION items_search_text() RETURNS trigger AS $$
 BEGIN
-  NEW.search_text := unaccent(lower(coalesce(NEW.name, '') || ' ' || coalesce(NEW.comment, '')));
+  NEW.search_text := unaccent(lower(coalesce(NEW.name, '') || ' ' || coalesce(NEW.comment, '') || ' ' || coalesce(NEW.inventory_tag, '')));
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE SEQUENCE IF NOT EXISTS inventory_tag_seq;
+
 CREATE TABLE IF NOT EXISTS items (
   id TEXT PRIMARY KEY,
+  inventory_tag TEXT UNIQUE,
   name TEXT NOT NULL,
   best_before DATE NOT NULL,
   content_amount DOUBLE PRECISION NOT NULL,
@@ -23,6 +26,6 @@ CREATE TABLE IF NOT EXISTS items (
 );
 
 CREATE TRIGGER items_search_text_trigger
-BEFORE INSERT OR UPDATE OF name, comment ON items
+BEFORE INSERT OR UPDATE OF name, comment, inventory_tag ON items
 FOR EACH ROW
 EXECUTE FUNCTION items_search_text();

@@ -3,6 +3,7 @@ export type Packaging = 'bottle' | 'can' | 'box' | 'bag' | 'jar' | 'package' | '
 
 export interface Item {
   id: string;
+  inventoryTag: string;
   name: string;
   bestBefore: string;
   contentAmount: number;
@@ -22,6 +23,7 @@ export interface JsonApiItemAttributes {
   packaging: Packaging;
   picture_key: string | null;
   comment?: string;
+  inventory_tag: string;
   created_at: string;
   updated_at: string;
 }

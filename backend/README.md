@@ -82,6 +82,8 @@ curl -X POST http://localhost:4000/api/items \
     - `sort`: `id | name | best_before | created_at | updated_at`
     - prefix with `-` for descending (example: `sort=best_before,-name`)
     - default is `sort=id` (ascending)
+  - Supports search with `q` against `name`, `comment`, and `inventory_tag`
+    - use `#` prefix to search tags only (example: `q=#7K2R`)
 - `POST /api/items` returns:
   - `{ "data": { "type": "items", "id": "...", "attributes": { ... } } }`
 - `PATCH /api/items/{id}` updates an item:
@@ -92,6 +94,7 @@ curl -X POST http://localhost:4000/api/items \
   - deleted items are excluded from `GET /api/items`
 - `packaging` is required and must be one of:
   - `bottle | can | box | bag | jar | package | other`
+- Item attributes include `inventory_tag`, a 4-character auto-generated lookup tag.
 - Validation and parsing failures return JSON:API error documents:
   - `{ "errors": [ { "status": "400", "title": "...", "detail": "..." } ] }`
 

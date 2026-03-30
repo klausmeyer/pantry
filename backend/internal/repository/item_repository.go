@@ -49,6 +49,7 @@ type ItemRepository interface {
 	GetByID(ctx context.Context, id string) (item.Item, error)
 	List(ctx context.Context, input ListItemsInput) ([]item.Item, error)
 	SoftDelete(ctx context.Context, id string) error
+	NextInventoryTag(ctx context.Context) (int64, error)
 }
 
 var ErrNotFound = errors.New("item not found")

@@ -49,7 +49,8 @@ paths:
           name: q
           required: false
           description: |
-            Case-insensitive search term matched against item name and comment.
+            Case-insensitive search term matched against item name, comment, and inventory tag.
+            Prefix with `#` to search just the tag (for example `q=#7K2R`).
             Example: `q=rice`
           schema:
             type: string
@@ -77,6 +78,7 @@ paths:
                       - type: items
                         id: 019579e0-c393-7f0c-8f04-2ad9549f2772
                         attributes:
+                          inventory_tag: 7K2R
                           name: Rice
                           best_before: '2026-12-31'
                           content_amount: 500
@@ -89,6 +91,7 @@ paths:
                       - type: items
                         id: 019579e0-c39a-7a44-8d74-a8a1892d5b1d
                         attributes:
+                          inventory_tag: 7K2S
                           name: Milk
                           best_before: '2026-03-14'
                           content_amount: 1
@@ -481,6 +484,7 @@ components:
         type: items
         id: 019579e0-c393-7f0c-8f04-2ad9549f2772
         attributes:
+          inventory_tag: 7K2R
           name: Rice
           best_before: '2026-12-31'
           content_amount: 500
@@ -506,6 +510,7 @@ components:
       type: object
       additionalProperties: false
       example:
+        inventory_tag: 7K2R
         name: Rice
         best_before: '2026-12-31'
         content_amount: 500
@@ -516,6 +521,13 @@ components:
         created_at: '2026-03-09T20:51:00Z'
         updated_at: '2026-03-09T20:51:00Z'
       properties:
+        inventory_tag:
+          type: string
+          description: |
+            Short inventory tag for quick lookup (auto-generated).
+            Uses a 4-character Crockford Base32 alphabet without I, L, O, or 0.
+          minLength: 4
+          maxLength: 4
         name:
           type: string
         best_before:
@@ -545,6 +557,7 @@ components:
           type: string
           format: date-time
       required:
+        - inventory_tag
         - name
         - best_before
         - content_amount
@@ -661,6 +674,7 @@ components:
           - type: items
             id: 019579e0-c393-7f0c-8f04-2ad9549f2772
             attributes:
+              inventory_tag: 7K2R
               name: Rice
               best_before: '2026-12-31'
               content_amount: 500
@@ -685,6 +699,7 @@ components:
           type: items
           id: 019579e0-c3b5-7424-bf89-ae567634a2ff
           attributes:
+            inventory_tag: 7K2R
             name: Rice
             best_before: '2026-12-31'
             content_amount: 500

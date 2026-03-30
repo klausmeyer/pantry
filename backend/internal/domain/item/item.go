@@ -24,6 +24,7 @@ const (
 
 type Item struct {
 	ID            string
+	InventoryTag  string
 	Name          string
 	BestBefore    time.Time
 	ContentAmount float64

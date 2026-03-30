@@ -300,7 +300,7 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                 Expanded(
                   child: CupertinoSearchTextField(
                     controller: _searchController,
-                    placeholder: 'Search items',
+                    placeholder: 'Search items or #tag',
                     onChanged: _onSearchChanged,
                     autocorrect: false,
                   ),
@@ -633,6 +633,28 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
                                   top: 8,
                                   child: BestBeforeBadge(
                                     bestBefore: item.bestBefore!,
+                                  ),
+                                ),
+                              if (item.inventoryTag.isNotEmpty)
+                                Positioned(
+                                  right: 12,
+                                  top: 36,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: CupertinoColors.systemGrey5,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '#${item.inventoryTag}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: CupertinoColors.systemGrey,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               Positioned(

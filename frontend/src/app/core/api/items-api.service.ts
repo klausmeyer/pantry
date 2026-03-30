@@ -187,6 +187,7 @@ export class ItemsApiService {
   private toItem(resource: JsonApiItemResource): Item {
     return {
       id: resource.id,
+      inventoryTag: resource.attributes.inventory_tag,
       name: resource.attributes.name,
       bestBefore: resource.attributes.best_before,
       contentAmount: resource.attributes.content_amount,
