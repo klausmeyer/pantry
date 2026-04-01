@@ -51,21 +51,27 @@ String bestBeforeLabel(String bestBefore) {
 }
 
 BestBeforeColors bestBeforeColors(BuildContext context, int delta) {
-  if (delta < 0) {
+  if (delta <= 0) {
     return BestBeforeColors(
       background: CupertinoColors.systemRed.withValues(alpha: 0.2),
       foreground: CupertinoColors.systemRed,
     );
   }
-  if (delta <= 14) {
+  if (delta >= 30) {
     return BestBeforeColors(
-      background: CupertinoColors.systemOrange.withValues(alpha: 0.2),
-      foreground: CupertinoColors.systemOrange,
+      background: CupertinoColors.systemGreen.withValues(alpha: 0.2),
+      foreground: CupertinoColors.systemGreen,
+    );
+  }
+  if (delta >= 14) {
+    return BestBeforeColors(
+      background: CupertinoColors.systemYellow.withValues(alpha: 0.2),
+      foreground: CupertinoColors.systemYellow,
     );
   }
   return BestBeforeColors(
-    background: CupertinoColors.systemGreen.withValues(alpha: 0.2),
-    foreground: CupertinoColors.systemGreen,
+    background: CupertinoColors.systemOrange.withValues(alpha: 0.2),
+    foreground: CupertinoColors.systemOrange,
   );
 }
 
