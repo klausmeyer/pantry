@@ -655,13 +655,16 @@ export class ItemsPageComponent {
 
   bestBeforeBadgeClass(bestBefore: string): string {
     const delta = this.bestBeforeDeltaDays(bestBefore);
-    if (delta < 0) {
+    if (delta <= 0) {
       return 'badge-error';
     }
-    if (delta <= 14) {
+    if (delta >= 30) {
+      return 'badge-success';
+    }
+    if (delta >= 14) {
       return 'badge-warning';
     }
-    return 'badge-success';
+    return 'badge-orange';
   }
 
   bestBeforeLabel(bestBefore: string): string {
