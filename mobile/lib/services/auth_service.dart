@@ -63,12 +63,12 @@ class AuthService {
     );
 
     final state = AuthState(
-      accessToken: result?.accessToken,
-      idToken: result?.idToken,
-      refreshToken: result?.refreshToken,
-      expiresAt: result?.accessTokenExpirationDateTime,
+      accessToken: result.accessToken,
+      idToken: result.idToken,
+      refreshToken: result.refreshToken,
+      expiresAt: result.accessTokenExpirationDateTime,
       profile:
-          result?.idToken != null ? UserProfile.fromIdToken(result!.idToken!) : null,
+          result.idToken != null ? UserProfile.fromIdToken(result.idToken!) : null,
     );
 
     await _persist(state);
@@ -87,12 +87,12 @@ class AuthService {
     );
 
     final state = AuthState(
-      accessToken: response?.accessToken,
-      idToken: response?.idToken,
-      refreshToken: response?.refreshToken ?? refreshToken,
-      expiresAt: response?.accessTokenExpirationDateTime,
-      profile: response?.idToken != null
-          ? UserProfile.fromIdToken(response!.idToken!)
+      accessToken: response.accessToken,
+      idToken: response.idToken,
+      refreshToken: response.refreshToken ?? refreshToken,
+      expiresAt: response.accessTokenExpirationDateTime,
+      profile: response.idToken != null
+          ? UserProfile.fromIdToken(response.idToken!)
           : null,
     );
 

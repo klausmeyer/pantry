@@ -53,18 +53,18 @@ String bestBeforeLabel(String bestBefore) {
 BestBeforeColors bestBeforeColors(BuildContext context, int delta) {
   if (delta < 0) {
     return BestBeforeColors(
-      background: CupertinoColors.systemRed.withOpacity(0.2),
+      background: CupertinoColors.systemRed.withValues(alpha: 0.2),
       foreground: CupertinoColors.systemRed,
     );
   }
   if (delta <= 14) {
     return BestBeforeColors(
-      background: CupertinoColors.systemOrange.withOpacity(0.2),
+      background: CupertinoColors.systemOrange.withValues(alpha: 0.2),
       foreground: CupertinoColors.systemOrange,
     );
   }
   return BestBeforeColors(
-    background: CupertinoColors.systemGreen.withOpacity(0.2),
+    background: CupertinoColors.systemGreen.withValues(alpha: 0.2),
     foreground: CupertinoColors.systemGreen,
   );
 }
