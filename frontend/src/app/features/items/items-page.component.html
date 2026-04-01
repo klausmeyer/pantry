@@ -1,5 +1,7 @@
-<section class="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2">
-  <div class="pointer-events-auto flex items-center gap-2 rounded-box bg-base-200/85 p-2 shadow-lg backdrop-blur">
+<section class="pointer-events-none fixed inset-x-0 top-4 z-50">
+  <div
+    class="pointer-events-auto mx-auto flex w-[min(1100px,calc(100%-2rem))] items-center gap-2 rounded-box bg-base-200/85 p-2 shadow-lg backdrop-blur"
+  >
     <button
       class="btn btn-sm btn-circle"
       type="button"
@@ -22,11 +24,11 @@
     >
       🇩🇪
     </button>
-    <ng-container *ngIf="user$ | async as user">
+    <div class="ml-auto flex items-center gap-2" *ngIf="user$ | async as user">
       <span class="mx-1 h-6 w-px bg-base-content/20"></span>
       <span class="text-xs font-medium max-w-[140px] truncate">{{ jwtUsername(user) }}</span>
       <button class="btn btn-ghost btn-xs" type="button" (click)="logout()">{{ t('logout') }}</button>
-    </ng-container>
+    </div>
   </div>
 </section>
 

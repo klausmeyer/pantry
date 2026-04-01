@@ -738,13 +738,16 @@ export class ItemsPageComponent {
     }
     try {
       const payload = JSON.parse(this.decodeBase64Url(parts[1])) as Record<string, unknown>;
-      const name =
-        payload['preferred_username'] ??
-        payload['username'] ??
-        payload['name'] ??
-        payload['email'] ??
-        payload['sub'];
-      return typeof name === 'string' ? name : '';
+      const name = payload['name'];
+      const givenName = payload['given_name'];
+      const familyName = payload['family_name'];
+      const fullName =
+        typeof name === 'string'
+          ? name
+          : typeof givenName === 'string' || typeof familyName === 'string'
+            ? [givenName, familyName].filter((value) => typeof value === 'string' && value.length > 0).join(' ')
+            : payload['preferred_username'] ?? payload['username'] ?? payload['sub'];
+      return typeof fullName === 'string' ? fullName : '';
     } catch {
       return '';
     }
