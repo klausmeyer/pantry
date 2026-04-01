@@ -361,14 +361,6 @@ class _AuthenticatedHomeState extends State<AuthenticatedHome> {
     );
   }
 
-  void _clearSearch() {
-    _searchController.clear();
-    setState(() {
-      _searchTerm = '';
-      _itemsFuture = _loadItems();
-    });
-  }
-
   Future<void> _openCreate() async {
     final result = await Navigator.of(context).push<Item>(
       CupertinoPageRoute(
