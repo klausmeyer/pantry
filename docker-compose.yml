@@ -77,17 +77,17 @@ services:
       dockerfile: Dockerfile
     container_name: pantry-frontend
     environment:
-      BACKEND_UPSTREAM: backend:4000
+      BACKEND_UPSTREAM: pantry-backend:4000
       OIDC_ISSUER: http://localhost:8081/realms/test
       OIDC_CLIENT_ID: pantry
-      OIDC_REDIRECT_URI: http://localhost:8080/auth/callback
-      OIDC_POST_LOGOUT_REDIRECT_URI: http://localhost:8080/
+      OIDC_REDIRECT_URI: http://localhost:4200/auth/callback
+      OIDC_POST_LOGOUT_REDIRECT_URI: http://localhost:4200/
       OIDC_SCOPE: "openid profile email"
     depends_on:
       backend:
         condition: service_started
     ports:
-      - "8080:80"
+      - "4200:80"
 
 volumes:
   pantry_pg_data:
