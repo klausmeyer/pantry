@@ -1,5 +1,7 @@
 // Karma configuration generated for Pantry frontend tests.
 module.exports = function (config) {
+  const isCI = process.env.CI === 'true' || process.env.CI === '1';
+
   config.set({
     basePath: '',
     frameworks: ['jasmine', '@angular-devkit/build-angular'],
@@ -19,7 +21,13 @@ module.exports = function (config) {
       reporters: [{ type: 'html' }, { type: 'text-summary' }],
     },
     reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      },
+    },
+    browsers: [isCI ? 'ChromeHeadlessNoSandbox' : 'ChromeHeadless'],
     restartOnFileChange: true,
   });
 };
