@@ -1,5 +1,5 @@
-import { CommonModule, DOCUMENT } from '@angular/common';
-import { Component, HostListener, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, HostListener, inject, DOCUMENT } from '@angular/core';
 import { Observable, catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
 import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';

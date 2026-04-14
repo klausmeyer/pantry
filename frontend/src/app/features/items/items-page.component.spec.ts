@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
@@ -51,7 +51,7 @@ describe('ItemsPageComponent', () => {
       providers: [
         { provide: ItemsApiService, useValue: api },
         { provide: AuthService, useValue: auth },
-        { provide: DOCUMENT, useValue: document }
+        { provide: Document, useValue: document }
       ]
     });
   });
