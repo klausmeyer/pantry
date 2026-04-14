@@ -1,4 +1,4 @@
-name: Build And Push Docker Images
+name: build-docker-images
 
 on:
   push:
@@ -13,7 +13,11 @@ permissions:
   contents: read
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests-backend.yml
+
   docker:
+    needs: tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

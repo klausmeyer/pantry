@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"path/filepath"
@@ -8,16 +9,21 @@ import (
 	"time"
 
 	"github.com/klausmeyer/pantry/backend/internal/id"
-	"github.com/klausmeyer/pantry/backend/internal/storage"
 	"github.com/klausmeyer/pantry/backend/pkg/httputil"
 )
 
 type UploadsHandler struct {
-	presigner *storage.S3Presigner
+	presigner UploadPresigner
 	ids       *id.Generator
 }
 
-func NewUploadsHandler(presigner *storage.S3Presigner, ids *id.Generator) *UploadsHandler {
+type UploadPresigner interface {
+	PresignPut(ctx context.Context, key, contentType string, expires time.Duration) (string, map[string]string, error)
+	PresignGet(ctx context.Context, key string, expires time.Duration) (string, error)
+	Copy(ctx context.Context, sourceKey, destKey string) error
+}
+
+func NewUploadsHandler(presigner UploadPresigner, ids *id.Generator) *UploadsHandler {
 	return &UploadsHandler{presigner: presigner, ids: ids}
 }
 

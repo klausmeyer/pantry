@@ -1,4 +1,4 @@
-name: Build And Push Helm Chart
+name: build-helm-chart
 
 on:
   push:
@@ -13,6 +13,9 @@ permissions:
   contents: read
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests-backend.yml
+
   chart_version:
     runs-on: ubuntu-latest
     outputs:
@@ -52,7 +55,7 @@ jobs:
           fi
 
   helm:
-    needs: chart_version
+    needs: [tests, chart_version]
     if: needs.chart_version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
