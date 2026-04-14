@@ -13,8 +13,10 @@ permissions:
   contents: read
 
 jobs:
-  tests:
+  tests_backend:
     uses: ./.github/workflows/tests-backend.yml
+  tests_frontend:
+    uses: ./.github/workflows/tests-frontend.yml
 
   chart_version:
     runs-on: ubuntu-latest
@@ -55,7 +57,7 @@ jobs:
           fi
 
   helm:
-    needs: [tests, chart_version]
+    needs: [tests_backend, tests_frontend, chart_version]
     if: needs.chart_version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:

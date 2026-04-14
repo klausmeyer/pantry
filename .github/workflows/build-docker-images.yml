@@ -13,11 +13,13 @@ permissions:
   contents: read
 
 jobs:
-  tests:
+  tests_backend:
     uses: ./.github/workflows/tests-backend.yml
+  tests_frontend:
+    uses: ./.github/workflows/tests-frontend.yml
 
   docker:
-    needs: tests
+    needs: [tests_backend, tests_frontend]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

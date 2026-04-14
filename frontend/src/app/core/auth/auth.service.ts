@@ -14,13 +14,13 @@ export class AuthService {
   readonly error$ = this.errorSubject.asObservable();
   readonly enabled = this.config.enabled;
 
-  constructor() {
+  constructor(userManagerFactory: typeof UserManager = UserManager) {
     if (!this.config.enabled) {
       this.manager = null;
       return;
     }
 
-    this.manager = new UserManager({
+    this.manager = new userManagerFactory({
       authority: this.config.issuer,
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
