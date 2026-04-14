@@ -4,10 +4,9 @@ import { ItemsPageComponent } from './features/items/items-page.component';
 import { AuthService } from './core/auth/auth.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [CommonModule, ItemsPageComponent],
-  template: `
+    selector: 'app-root',
+    imports: [CommonModule, ItemsPageComponent],
+    template: `
     <div data-theme="cupcake" class="min-h-screen">
       <ng-container *ngIf="ready; else loading">
         <main class="mx-auto w-[min(1100px,calc(100%-2rem))] pt-20 pb-12" *ngIf="canRender; else blocked">

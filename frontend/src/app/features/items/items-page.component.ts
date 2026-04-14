@@ -8,10 +8,9 @@ import { AuthService } from '../../core/auth/auth.service';
 import type { User } from 'oidc-client-ts';
 
 @Component({
-  selector: 'app-items-page',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './items-page.component.html'
+    selector: 'app-items-page',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './items-page.component.html'
 })
 export class ItemsPageComponent {
   private readonly api = inject(ItemsApiService);
