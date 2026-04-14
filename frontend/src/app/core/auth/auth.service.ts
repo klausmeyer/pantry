@@ -1,7 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, InjectionToken, Optional } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { getOIDCConfig } from './oidc-config';
+
+export const USER_MANAGER_FACTORY = new InjectionToken<typeof UserManager>(
+  'USER_MANAGER_FACTORY'
+);
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -14,13 +18,16 @@ export class AuthService {
   readonly error$ = this.errorSubject.asObservable();
   readonly enabled = this.config.enabled;
 
-  constructor(userManagerFactory: typeof UserManager = UserManager) {
+  constructor(
+    @Optional() @Inject(USER_MANAGER_FACTORY) userManagerFactory?: typeof UserManager
+  ) {
     if (!this.config.enabled) {
       this.manager = null;
       return;
     }
 
-    this.manager = new userManagerFactory({
+    const managerFactory = userManagerFactory ?? UserManager;
+    this.manager = new managerFactory({
       authority: this.config.issuer,
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
