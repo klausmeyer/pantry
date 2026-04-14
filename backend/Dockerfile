@@ -12,7 +12,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /out/pantry-api ./cmd/api
 
-FROM alpine:3.21
+FROM alpine:3.23
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=builder /out/pantry-api /usr/local/bin/pantry-api
