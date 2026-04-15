@@ -14,7 +14,7 @@ RUN npm run build && \
       cp -R dist/pantry-frontend /tmp/frontend-dist; \
     fi
 
-FROM nginx:1.29-alpine
+FROM nginx:1.30-alpine
 ENV BACKEND_UPSTREAM=backend:4000
 ENV NGINX_ENVSUBST_FILTER=BACKEND_UPSTREAM
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
