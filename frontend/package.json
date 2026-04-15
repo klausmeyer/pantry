@@ -26,18 +26,19 @@
     "@angular/build": "^21.2.7",
     "@angular/cli": "^21.2.7",
     "@angular/compiler-cli": "^21.2.8",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/jasmine": "^6.0.0",
     "@types/node": "^24.0.0",
-    "autoprefixer": "^10.4.20",
-    "daisyui": "^5.0.0",
+    "autoprefixer": "^10.5.0",
+    "daisyui": "^5.5.19",
     "jasmine-core": "^6.0.0",
     "karma": "^6.4.4",
     "karma-chrome-launcher": "^3.2.0",
     "karma-coverage": "^2.2.1",
     "karma-jasmine": "^5.1.0",
     "karma-jasmine-html-reporter": "^2.1.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^4.0.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"
   }
 }
