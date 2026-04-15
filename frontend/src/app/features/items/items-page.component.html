@@ -61,80 +61,52 @@
 </section>
 
 <section class="mb-4 rounded-box bg-base-200/60 p-4 shadow flex flex-wrap items-end gap-3">
-  <div class="form-control w-auto self-end">
-    <div class="label py-1">
-      <span class="label-text invisible">Action</span>
-    </div>
-    <button class="btn btn-primary btn-sm" type="button" (click)="openCreateModal()">{{ t('addItem') }}</button>
-  </div>
-
   <div class="ml-auto flex flex-wrap items-end gap-3">
-    <label class="form-control w-60">
-      <div class="label py-1">
-        <span class="label-text">{{ t('search') }}</span>
-      </div>
-      <div class="join">
-        <input
-          class="input input-bordered input-sm join-item w-full"
-          type="text"
-          [placeholder]="t('searchPlaceholder')"
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange($event)"
-          name="search"
-          />
-        <button
-          class="btn btn-sm join-item"
-          type="button"
-          [disabled]="!searchTerm"
-          (click)="clearSearch()"
-          >
-          {{ t('clearSearch') }}
-        </button>
-      </div>
+    <label class="form-control input w-60">
+      <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </g>
+      </svg>
+      <input
+        class="input input-sm join-item w-full focus:outline-none focus:border-base-content"
+        type="text"
+        [placeholder]="t('searchPlaceholder')"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)"
+        name="search"
+        />
     </label>
-    <label class="form-control w-60">
-      <div class="label py-1">
-        <span class="label-text">{{ t('sortBy') }}</span>
-      </div>
-      <select class="select select-bordered select-sm" [value]="sortBy" (change)="onSortByChange($any($event.target).value)">
+    <label class="form-control select w-60">
+      <span class="label">{{ t('filter') }}</span>
+      <select class="select select-sm focus:outline-none focus:ring-0" [value]="activeFilter"
+        (change)="onFilterChange($any($event.target).value)">
+        <option value="all">{{ t('filterAll') }}</option>
+        <option value="has_image:true">{{ t('filterHasImage') }}</option>
+        <option value="has_image:false">{{ t('filterNoImage') }}</option>
+      </select>
+    </label>
+    <label class="form-control select w-60">
+      <span class="label">{{ t('sortBy') }}</span>
+      <select class="select select-sm focus:outline-none focus:ring-0" [value]="sortBy" (change)="onSortByChange($any($event.target).value)">
         <option value="name">{{ t('sortName') }}</option>
         <option value="best_before">{{ t('sortBestBefore') }}</option>
         <option value="created_at">{{ t('sortCreatedAt') }}</option>
         <option value="updated_at">{{ t('sortUpdatedAt') }}</option>
       </select>
     </label>
-    <label class="form-control w-44">
-      <div class="label py-1">
-        <span class="label-text">{{ t('filter') }}</span>
-      </div>
-      <select
-        class="select select-bordered select-sm"
-        [value]="activeFilter"
-        (change)="onFilterChange($any($event.target).value)"
-        >
-        <option value="all">{{ t('filterAll') }}</option>
-        <option value="has_image:true">{{ t('filterHasImage') }}</option>
-        <option value="has_image:false">{{ t('filterNoImage') }}</option>
-      </select>
-    </label>
-    <div class="form-control w-auto self-end">
-      <div class="label py-1">
-        <span class="label-text invisible">Order</span>
-      </div>
-      <button class="btn btn-sm btn-outline" type="button" (click)="toggleSortOrder()">
-        {{ t('order') }}: {{ sortOrder === 'asc' ? 'ASC' : 'DESC' }}
+    <div class="form-control">
+      <button class="btn btn-soft btn-circle" type="button" (click)="toggleSortOrder()">
+        {{ sortOrder === 'asc' ? '↓' : '↑' }}
       </button>
     </div>
-    <div class="form-control w-auto self-end">
-      <div class="label py-1">
-        <span class="label-text">{{ t('view') }}</span>
-      </div>
-      <div class="join">
+    <div class="form-control w-40">
+      <!-- <div class="join">
         <button
           class="btn btn-sm join-item"
           type="button"
           [class.btn-primary]="viewMode === 'list'"
-          [class.btn-outline]="viewMode !== 'list'"
           (click)="setViewMode('list')"
           >
           {{ t('viewList') }}
@@ -143,12 +115,18 @@
           class="btn btn-sm join-item"
           type="button"
           [class.btn-primary]="viewMode === 'grid'"
-          [class.btn-outline]="viewMode !== 'grid'"
           (click)="setViewMode('grid')"
           >
           {{ t('viewGrid') }}
         </button>
+      </div> -->
+
+      <div class="join">
+        <input class="join-item btn btn-square w-18" type="radio" name="options" aria-label="{{ t('viewList') }}" [checked]="viewMode === 'list'" (click)="setViewMode('list')" />
+        <input class="join-item btn btn-square w-18" type="radio" name="options" aria-label="{{ t('viewGrid') }}" [checked]="viewMode === 'grid'" (click)="setViewMode('grid')" />
       </div>
+
+
     </div>
   </div>
 </section>
@@ -159,13 +137,13 @@
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('name') }}</span></div>
-        <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.name" name="name" />
+        <input class="input input-sm" type="text" [(ngModel)]="newItem.name" name="name" />
       </label>
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('bestBefore') }}</span></div>
         <input
-          class="input input-bordered input-sm"
+          class="input input-sm"
           type="text"
           placeholder="YYYY-MM-DD"
           pattern="\d{4}-\d{2}-\d{2}"
@@ -177,7 +155,7 @@
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('contentAmount') }}</span></div>
         <input
-          class="input input-bordered input-sm"
+          class="input input-sm"
           type="number"
           min="0.01"
           step="0.01"
@@ -188,7 +166,7 @@
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('contentUnit') }}</span></div>
-        <select class="select select-bordered select-sm" [(ngModel)]="newItem.contentUnit" name="contentUnit">
+        <select class="select select-sm" [(ngModel)]="newItem.contentUnit" name="contentUnit">
           <option value="grams">{{ contentUnitLabel('grams') }}</option>
           <option value="ml">{{ contentUnitLabel('ml') }}</option>
           <option value="l">{{ contentUnitLabel('l') }}</option>
@@ -197,7 +175,7 @@
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
-        <select class="select select-bordered select-sm" [(ngModel)]="newItem.packaging" name="packaging">
+        <select class="select select-sm" [(ngModel)]="newItem.packaging" name="packaging">
           <option value="bottle">{{ packagingLabel('bottle') }}</option>
           <option value="can">{{ packagingLabel('can') }}</option>
           <option value="box">{{ packagingLabel('box') }}</option>
@@ -211,7 +189,7 @@
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
         <input
-          class="file-input file-input-bordered file-input-sm"
+          class="file-input file-file-input-sm"
           type="file"
           accept="image/*"
           (change)="onNewPictureSelected($event)"
@@ -229,7 +207,7 @@
 
     <label class="form-control mt-2">
       <div class="label py-1"><span class="label-text">{{ t('commentOptional') }}</span></div>
-      <input class="input input-bordered input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
+      <input class="input input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
     </label>
 
     <label class="label cursor-pointer justify-start gap-2 mt-2">
@@ -256,6 +234,12 @@
     Close
   </button>
 </div>
+
+<section class="mb-4">
+  <div class="form-control">
+    <button class="btn btn-primary btn-sm" type="button" (click)="openCreateModal()">{{ t('addItem') }}</button>
+  </div>
+</section>
 
 @if (loading) {
   <section class="alert mb-4 shadow-lg">
@@ -543,7 +527,7 @@
         </div>
       }
     } @else {
-      <article class="rounded-xl border border-dashed border-base-content/30 bg-base-200 px-4 py-6">
+      <article class="rounded-xl border border-base-content/30 bg-base-200 px-4 py-6">
         <h2 class="text-lg font-semibold">{{ t('noItemsYet') }}</h2>
         <p class="opacity-70">{{ t('createFirstItem') }}</p>
       </article>
@@ -557,13 +541,13 @@
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('name') }}</span></div>
-        <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.name" name="editName" />
+        <input class="input input-sm" type="text" [(ngModel)]="editItem.name" name="editName" />
       </label>
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('bestBefore') }}</span></div>
         <input
-          class="input input-bordered input-sm"
+          class="input input-sm"
           type="text"
           placeholder="YYYY-MM-DD"
           pattern="\d{4}-\d{2}-\d{2}"
@@ -575,7 +559,7 @@
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('contentAmount') }}</span></div>
         <input
-          class="input input-bordered input-sm"
+          class="input input-sm"
           type="number"
           min="0.01"
           step="0.01"
@@ -586,7 +570,7 @@
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('contentUnit') }}</span></div>
-        <select class="select select-bordered select-sm" [(ngModel)]="editItem.contentUnit" name="editContentUnit">
+        <select class="select select-sm" [(ngModel)]="editItem.contentUnit" name="editContentUnit">
           <option value="grams">{{ contentUnitLabel('grams') }}</option>
           <option value="ml">{{ contentUnitLabel('ml') }}</option>
           <option value="l">{{ contentUnitLabel('l') }}</option>
@@ -595,7 +579,7 @@
 
       <label class="form-control">
         <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
-        <select class="select select-bordered select-sm" [(ngModel)]="editItem.packaging" name="editPackaging">
+        <select class="select select-sm" [(ngModel)]="editItem.packaging" name="editPackaging">
           <option value="bottle">{{ packagingLabel('bottle') }}</option>
           <option value="can">{{ packagingLabel('can') }}</option>
           <option value="box">{{ packagingLabel('box') }}</option>
@@ -612,7 +596,7 @@
         </label>
         <input
           id="editPictureInput"
-          class="file-input file-input-bordered file-input-sm"
+          class="file-input file-file-input-sm"
           type="file"
           accept="image/*"
           #editPictureInput
@@ -645,7 +629,7 @@
 
     <label class="form-control mt-2">
       <div class="label py-1"><span class="label-text">{{ t('commentOptional') }}</span></div>
-      <input class="input input-bordered input-sm" type="text" [(ngModel)]="editItem.comment" name="editComment" />
+      <input class="input input-sm" type="text" [(ngModel)]="editItem.comment" name="editComment" />
     </label>
 
     @if (editError) {
