@@ -29,7 +29,7 @@
     "@types/jasmine": "^6.0.0",
     "@types/node": "^24.0.0",
     "autoprefixer": "^10.4.20",
-    "daisyui": "^4.12.24",
+    "daisyui": "^5.0.0",
     "jasmine-core": "^6.0.0",
     "karma": "^6.4.4",
     "karma-chrome-launcher": "^3.2.0",
