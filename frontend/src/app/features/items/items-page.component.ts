@@ -155,7 +155,7 @@ export class ItemsPageComponent {
     },
     de: {
       addItem: 'Artikel hinzufügen',
-      sortBy: 'Sortieren nach',
+      sortBy: 'Sortierung',
       search: 'Suche',
       searchPlaceholder: 'Artikel suchen',
       filter: 'Filter',
