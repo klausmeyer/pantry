@@ -1,0 +1,7 @@
+{
+  "/api": {
+    "target": "https://pantry.home.klaus-meyer.net",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

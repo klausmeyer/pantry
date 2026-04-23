@@ -28,8 +28,5 @@ function isBackendRequest(url: string): boolean {
   if (url.startsWith(`${window.location.origin}/api`)) {
     return true;
   }
-  if (url.startsWith('http://localhost:4000/api')) {
-    return true;
-  }
   return false;
 }

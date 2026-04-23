@@ -148,9 +148,6 @@ export class ItemsApiService {
   }
 
   private resolveBaseUrl(): string {
-    if (typeof window !== 'undefined' && window.location.port === '4200') {
-      return 'http://localhost:4000/api';
-    }
     return '/api';
   }
 
