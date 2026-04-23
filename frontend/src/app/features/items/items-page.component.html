@@ -135,13 +135,13 @@
   <div class="modal-box box-border w-full max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto overscroll-contain">
     <h2 class="card-title mb-3">{{ t('addItemTitle') }}</h2>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('name') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('name') }}</legend>
         <input class="input input-sm" type="text" [(ngModel)]="newItem.name" name="name" />
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('bestBefore') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('bestBefore') }}</legend>
         <input
           class="input input-sm"
           type="text"
@@ -150,10 +150,10 @@
           [(ngModel)]="newItem.bestBefore"
           name="bestBefore"
           />
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('contentAmount') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('contentAmount') }}</legend>
         <input
           class="input input-sm"
           type="number"
@@ -162,19 +162,19 @@
           [(ngModel)]="newItem.contentAmount"
           name="contentAmount"
           />
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('contentUnit') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('contentUnit') }}</legend>
         <select class="select select-sm" [(ngModel)]="newItem.contentUnit" name="contentUnit">
           <option value="grams">{{ contentUnitLabel('grams') }}</option>
           <option value="ml">{{ contentUnitLabel('ml') }}</option>
           <option value="l">{{ contentUnitLabel('l') }}</option>
         </select>
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('packaging') }}</legend>
         <select class="select select-sm" [(ngModel)]="newItem.packaging" name="packaging">
           <option value="bottle">{{ packagingLabel('bottle') }}</option>
           <option value="can">{{ packagingLabel('can') }}</option>
@@ -184,34 +184,26 @@
           <option value="package">{{ packagingLabel('package') }}</option>
           <option value="other">{{ packagingLabel('other') }}</option>
         </select>
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('pictureKey') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('commentOptional') }}</legend>
+        <input class="input input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('pictureKey') }}</legend>
         <input
-          class="file-input file-file-input-sm"
+          class="file-input file-input-sm"
           type="file"
           accept="image/*"
           (change)="onNewPictureSelected($event)"
           />
-        @if (newItemPreviewUrl) {
-          <div class="mt-2">
-            <img class="h-16 w-16 rounded-md object-cover ring-1 ring-base-300" [src]="newItemPreviewUrl" alt="Preview" />
-          </div>
-        }
-        @if (newItemPictureFile) {
-          <span class="text-xs opacity-70 mt-1">{{ newItemPictureFile.name }}</span>
-        }
-      </label>
+      </fieldset>
     </div>
 
-    <label class="form-control mt-2">
-      <div class="label py-1"><span class="label-text">{{ t('commentOptional') }}</span></div>
-      <input class="input input-sm" type="text" [(ngModel)]="newItem.comment" name="comment" />
-    </label>
-
-    <label class="label cursor-pointer justify-start gap-2 mt-2">
-      <input class="checkbox checkbox-sm" type="checkbox" [(ngModel)]="addMoreOnCreate" name="addMoreOnCreate" />
+    <label class="label cursor-pointer justify-start gap-2 mt-6">
+      <input class="toggle" type="checkbox" [(ngModel)]="addMoreOnCreate" name="addMoreOnCreate" />
       <span class="label-text">{{ t('addMore') }}</span>
     </label>
 
@@ -539,13 +531,13 @@
   <div class="modal-box box-border w-full max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto overscroll-contain">
     <h2 class="card-title mb-3">{{ t('editItemTitle') }}</h2>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('name') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('name') }}</legend>
         <input class="input input-sm" type="text" [(ngModel)]="editItem.name" name="editName" />
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('bestBefore') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('bestBefore') }}</legend>
         <input
           class="input input-sm"
           type="text"
@@ -554,10 +546,10 @@
           [(ngModel)]="editItem.bestBefore"
           name="editBestBefore"
           />
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('contentAmount') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('contentAmount') }}</legend>
         <input
           class="input input-sm"
           type="number"
@@ -566,19 +558,19 @@
           [(ngModel)]="editItem.contentAmount"
           name="editContentAmount"
           />
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('contentUnit') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('contentUnit') }}</legend>
         <select class="select select-sm" [(ngModel)]="editItem.contentUnit" name="editContentUnit">
           <option value="grams">{{ contentUnitLabel('grams') }}</option>
           <option value="ml">{{ contentUnitLabel('ml') }}</option>
           <option value="l">{{ contentUnitLabel('l') }}</option>
         </select>
-      </label>
+      </fieldset>
 
-      <label class="form-control">
-        <div class="label py-1"><span class="label-text">{{ t('packaging') }}</span></div>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('packaging') }}</legend>
         <select class="select select-sm" [(ngModel)]="editItem.packaging" name="editPackaging">
           <option value="bottle">{{ packagingLabel('bottle') }}</option>
           <option value="can">{{ packagingLabel('can') }}</option>
@@ -588,20 +580,24 @@
           <option value="package">{{ packagingLabel('package') }}</option>
           <option value="other">{{ packagingLabel('other') }}</option>
         </select>
-      </label>
+      </fieldset>
 
-      <div class="form-control">
-        <label class="label py-1" for="editPictureInput">
-          <span class="label-text">{{ t('pictureKey') }}</span>
-        </label>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('commentOptional') }}</legend>
+        <input class="input input-sm" type="text" [(ngModel)]="editItem.comment" name="editComment" />
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">{{ t('pictureKey') }}</legend>
         <input
           id="editPictureInput"
-          class="file-input file-file-input-sm"
+          class="file-input file-input-sm"
           type="file"
           accept="image/*"
           #editPictureInput
           (change)="onEditPictureSelected($event)"
           />
+      </fieldset>
         @if (editItemPreviewUrl) {
           <div class="mt-2">
             <img class="h-16 w-16 rounded-md object-cover ring-1 ring-base-300" [src]="editItemPreviewUrl" alt="Preview" />
@@ -612,9 +608,6 @@
             {{ editItem.pictureKey }}
           </span>
         }
-        @if (editItemPictureFile) {
-          <span class="text-xs opacity-70 mt-1">{{ editItemPictureFile.name }}</span>
-        }
         @if (editItem.pictureKey || editItemPictureFile) {
           <button
             class="btn btn-xs btn-outline mt-2 self-start"
@@ -624,13 +617,7 @@
             {{ t('removePicture') }}
           </button>
         }
-      </div>
     </div>
-
-    <label class="form-control mt-2">
-      <div class="label py-1"><span class="label-text">{{ t('commentOptional') }}</span></div>
-      <input class="input input-sm" type="text" [(ngModel)]="editItem.comment" name="editComment" />
-    </label>
 
     @if (editError) {
       <div class="alert alert-error mt-4">
