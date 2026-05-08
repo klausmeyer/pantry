@@ -16,6 +16,7 @@ export class ItemsPageComponent {
   private readonly api = inject(ItemsApiService);
   private readonly document = inject(DOCUMENT);
   private readonly auth = inject(AuthService);
+  private readonly itemsListStateStorageKey = 'pantry_items_list_state_v1';
 
   readonly user$: Observable<User | null> = this.auth.user$;
 
@@ -240,12 +241,14 @@ export class ItemsPageComponent {
   constructor() {
     this.locale = this.readLocaleFromCookie();
     this.viewMode = this.readViewModeFromCookie();
+    this.applyItemsListStateFromStorage();
     this.applyLocaleToDocument();
     this.loadItems();
   }
 
   onSortByChange(sortBy: string): void {
     this.sortBy = sortBy as ItemSortBy;
+    this.persistItemsListState();
     this.loadItems();
   }
 
@@ -256,6 +259,7 @@ export class ItemsPageComponent {
 
   onFilterChange(filter: string): void {
     this.activeFilter = filter as FilterValue;
+    this.persistItemsListState();
     this.loadItems();
   }
 
@@ -274,6 +278,7 @@ export class ItemsPageComponent {
 
   toggleSortOrder(): void {
     this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.persistItemsListState();
     this.loadItems();
   }
 
@@ -842,6 +847,55 @@ export class ItemsPageComponent {
 
   private applyLocaleToDocument(): void {
     this.document.documentElement.lang = this.locale;
+  }
+
+  private applyItemsListStateFromStorage(): void {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(this.itemsListStateStorageKey);
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as Partial<{
+        sortBy: ItemSortBy;
+        sortOrder: SortOrder;
+        activeFilter: FilterValue;
+      }>;
+
+      if (parsed.sortBy === 'best_before' || parsed.sortBy === 'name' || parsed.sortBy === 'created_at' || parsed.sortBy === 'updated_at') {
+        this.sortBy = parsed.sortBy;
+      }
+      if (parsed.sortOrder === 'asc' || parsed.sortOrder === 'desc') {
+        this.sortOrder = parsed.sortOrder;
+      }
+      if (parsed.activeFilter === 'all' || parsed.activeFilter === 'has_image:true' || parsed.activeFilter === 'has_image:false') {
+        this.activeFilter = parsed.activeFilter;
+      }
+    } catch {
+      // Ignore invalid local storage payloads.
+    }
+  }
+
+  private persistItemsListState(): void {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        this.itemsListStateStorageKey,
+        JSON.stringify({
+          sortBy: this.sortBy,
+          sortOrder: this.sortOrder,
+          activeFilter: this.activeFilter
+        })
+      );
+    } catch {
+      // Ignore storage quota errors / blocked storage.
+    }
   }
 }
 
