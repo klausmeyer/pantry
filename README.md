@@ -4,25 +4,23 @@ Pantry helps you track household food supplies with a JSON:API backend and an An
 
 ## Project Layout
 
-- `api/` - OpenAPI 3.1 specification  
+- `api/` - OpenAPI 3.1 specification
   See [`api/openapi.yaml`](api/openapi.yaml)
-- `backend/` - Go API service, PostgreSQL repository, local infra via Docker Compose  
+- `backend/` - Go API service, PostgreSQL repository, local infra via Docker Compose
   See [`backend/README.md`](backend/README.md)
-- `frontend/` - Angular UI (Tailwind + DaisyUI)  
+- `frontend/` - Angular UI (Tailwind + DaisyUI)
   See [`frontend/README.md`](frontend/README.md)
-- `mobile/` - Flutter mobile app  
+- `mobile/` - Flutter mobile app
   See [`mobile/README.md`](mobile/README.md)
-- `misc/helm/pantry/` - Helm chart for Kubernetes deployments  
-  See [`misc/helm/pantry/README.md`](misc/helm/pantry/README.md)
 - `misc/` - helper scripts (for example CSV import tooling)
 
 ## Quick Start
 
-1. Start backend dependencies and run the API  
+1. Start backend dependencies and run the API
    Follow the steps in [`backend/README.md`](backend/README.md).
-2. Start the frontend app  
+2. Start the frontend app
    Follow the steps in [`frontend/README.md`](frontend/README.md).
-3. Review the contract and examples  
+3. Review the contract and examples
    Use [`api/openapi.yaml`](api/openapi.yaml).
 
 ## Docker Deployment
@@ -57,11 +55,6 @@ The stack now uses OIDC for authentication.
 - `docker-compose.yml` includes a local Keycloak instance and wires both services to the `http://localhost:8081/realms/test` issuer.
 
 If you use a different identity provider, update `OIDC_ISSUER` on the backend and the `OIDC_*` variables for the frontend.
-
-## Kubernetes Deployment
-
-For Kubernetes installs, use the Helm chart in [`misc/helm/pantry`](misc/helm/pantry).
-Chart usage and configuration are documented in [`misc/helm/pantry/README.md`](misc/helm/pantry/README.md).
 
 ## Development Notes
 
