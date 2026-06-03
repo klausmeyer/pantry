@@ -5,5 +5,9 @@
   ],
   "ignorePaths": [
     "mobile/"
-  ]
+  ],
+  "postUpdateOptions": ["gomodTidy"],
+  "gomod": {
+    "enabled": true
+  }
 }
