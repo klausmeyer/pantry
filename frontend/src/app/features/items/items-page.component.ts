@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, DOCUMENT } from '@angular/core';
+import { Component, HostListener, inject, DOCUMENT, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
 import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';
@@ -10,6 +10,7 @@ import type { User } from 'oidc-client-ts';
 @Component({
     selector: 'app-items-page',
     imports: [CommonModule, FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './items-page.component.html'
 })
 export class ItemsPageComponent {

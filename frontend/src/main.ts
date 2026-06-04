@@ -1,6 +1,6 @@
 import { provideZoneChangeDetection } from "@angular/core";
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { AppComponent } from './app/app.component';
 import { authInterceptor } from './app/core/auth/auth.interceptor';
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts';
@@ -27,7 +27,7 @@ if (window.location.pathname === silentPath && config.enabled) {
   });
 } else {
   bootstrapApplication(AppComponent, {
-    providers: [provideZoneChangeDetection(),provideHttpClient(withInterceptors([authInterceptor]))]
+    providers: [provideZoneChangeDetection(),provideHttpClient(withXhr(), withInterceptors([authInterceptor]))]
   }).catch((err: unknown) => {
     console.error('bootstrap failed', err);
   });
