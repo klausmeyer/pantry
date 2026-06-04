@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ItemsPageComponent } from './features/items/items-page.component';
 import { AuthService } from './core/auth/auth.service';
 
 @Component({
     selector: 'app-root',
     imports: [CommonModule, ItemsPageComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
     <div data-theme="cupcake" class="min-h-screen">
       @if (ready) {
