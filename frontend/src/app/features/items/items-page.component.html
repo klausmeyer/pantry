@@ -70,7 +70,7 @@
         </g>
       </svg>
       <input
-        class="input input-sm join-item w-full focus:outline-none focus:border-base-content"
+        class="input input-sm w-full focus:outline-none focus:border-base-content"
         type="text"
         [placeholder]="t('searchPlaceholder')"
         [(ngModel)]="searchTerm"
@@ -102,31 +102,10 @@
       </button>
     </div>
     <div class="form-control w-40">
-      <!-- <div class="join">
-        <button
-          class="btn btn-sm join-item"
-          type="button"
-          [class.btn-primary]="viewMode === 'list'"
-          (click)="setViewMode('list')"
-          >
-          {{ t('viewList') }}
-        </button>
-        <button
-          class="btn btn-sm join-item"
-          type="button"
-          [class.btn-primary]="viewMode === 'grid'"
-          (click)="setViewMode('grid')"
-          >
-          {{ t('viewGrid') }}
-        </button>
-      </div> -->
-
       <div class="join">
         <input class="join-item btn btn-square w-18" type="radio" name="options" aria-label="{{ t('viewList') }}" [checked]="viewMode === 'list'" (click)="setViewMode('list')" />
         <input class="join-item btn btn-square w-18" type="radio" name="options" aria-label="{{ t('viewGrid') }}" [checked]="viewMode === 'grid'" (click)="setViewMode('grid')" />
       </div>
-
-
     </div>
   </div>
 </section>
