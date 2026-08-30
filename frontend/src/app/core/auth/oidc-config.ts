@@ -3,10 +3,8 @@ export interface OIDCConfig {
   issuer: string;
   clientId: string;
   redirectUri: string;
-  silentRedirectUri: string;
   postLogoutRedirectUri: string;
   scope: string;
-  silentRenewEnabled: boolean;
 }
 
 declare global {
@@ -20,10 +18,8 @@ const defaultConfig: OIDCConfig = {
   issuer: 'https://example.com',
   clientId: 'pantry-client',
   redirectUri: `${window.location.origin}/auth/callback`,
-  silentRedirectUri: `${window.location.origin}/auth/silent`,
   postLogoutRedirectUri: `${window.location.origin}/`,
-  scope: 'openid profile email',
-  silentRenewEnabled: true
+  scope: 'openid profile email'
 };
 
 function normalizeBool(value: unknown, fallback: boolean): boolean {
@@ -47,10 +43,6 @@ export function getOIDCConfig(): OIDCConfig {
   return {
     ...defaultConfig,
     ...override,
-    enabled: normalizeBool(override.enabled, defaultConfig.enabled),
-    silentRenewEnabled: normalizeBool(
-      override.silentRenewEnabled,
-      defaultConfig.silentRenewEnabled
-    )
+    enabled: normalizeBool(override.enabled, defaultConfig.enabled)
   };
 }

@@ -22,7 +22,8 @@ The application consists of:
 ## Authentication
 
 - The backend validates bearer tokens against the configured OIDC issuer (`OIDC_ISSUER`).
-- The frontend reads OIDC settings from `oidc-config.js` or `OIDC_*` environment variables when running in Docker.
+- The backend exchanges OIDC authorization codes and refresh tokens using `OIDC_CLIENT_SECRET`; the secret must not be exposed through frontend config.
+- The frontend reads public OIDC settings from `oidc-config.js` or `OIDC_*` environment variables when running in Docker.
 
 ## Data Model
 

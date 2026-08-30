@@ -25,10 +25,11 @@
       🇩🇪
     </button>
     @if (user$ | async; as user) {
-      <div class="ml-auto flex items-center gap-2">
+      <div class="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2">
         <span class="mx-1 h-6 w-px bg-base-content/20"></span>
-        <span class="text-xs font-medium max-w-[140px] truncate">{{ jwtUsername(user) }}</span>
-        <button class="btn btn-ghost btn-xs" type="button" (click)="logout()">{{ t('logout') }}</button>
+        <span class="min-w-0 max-w-full truncate pr-2 text-right text-xs font-medium sm:whitespace-normal sm:break-all">
+          {{ userEmail(user) }}
+        </span>
       </div>
     }
   </div>

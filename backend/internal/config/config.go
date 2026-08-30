@@ -39,9 +39,13 @@ type SeedConfig struct {
 }
 
 type OIDCConfig struct {
-	Issuer   string
-	ClientID string
-	Audience string
+	Issuer                string
+	ClientID              string
+	ClientSecret          string
+	RedirectURI           string
+	PostLogoutRedirectURI string
+	Scope                 string
+	Audience              string
 }
 
 func Load() (Config, error) {
@@ -68,7 +72,12 @@ func Load() (Config, error) {
 			DevDataCount: getenvInt("SEED_DEV_DATA_COUNT", 100),
 		},
 		OIDC: OIDCConfig{
-			Issuer: getenv("OIDC_ISSUER", "https://example.com"),
+			Issuer:                getenv("OIDC_ISSUER", "https://example.com"),
+			ClientID:              getenv("OIDC_CLIENT_ID", "pantry-client"),
+			ClientSecret:          getenv("OIDC_CLIENT_SECRET", ""),
+			RedirectURI:           getenv("OIDC_REDIRECT_URI", "http://localhost:4200/auth/callback"),
+			PostLogoutRedirectURI: getenv("OIDC_POST_LOGOUT_REDIRECT_URI", "http://localhost:4200/"),
+			Scope:                 getenv("OIDC_SCOPE", "openid profile email"),
 		},
 	}
 
@@ -83,6 +92,15 @@ func Load() (Config, error) {
 	}
 	if cfg.OIDC.Issuer == "" {
 		return Config{}, errors.New("OIDC_ISSUER must not be empty")
+	}
+	if cfg.OIDC.ClientID == "" {
+		return Config{}, errors.New("OIDC_CLIENT_ID must not be empty")
+	}
+	if cfg.OIDC.ClientSecret == "" {
+		return Config{}, errors.New("OIDC_CLIENT_SECRET must not be empty")
+	}
+	if cfg.OIDC.RedirectURI == "" {
+		return Config{}, errors.New("OIDC_REDIRECT_URI must not be empty")
 	}
 
 	return cfg, nil

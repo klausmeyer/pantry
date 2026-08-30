@@ -47,6 +47,14 @@ func New(cfg config.Config) (*App, error) {
 	itemsService := service.NewItemService(repo, ids, presigner)
 	itemsHandler := handler.NewItemsHandler(itemsService)
 	uploadsHandler := handler.NewUploadsHandler(presigner, ids)
+	authCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	authHandler, err := handler.NewAuthHandler(authCtx, cfg.OIDC)
+	if err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("init oidc auth handler: %w", err)
+	}
 
 	if cfg.Seed.DevData {
 		seedCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -60,6 +68,10 @@ func New(cfg config.Config) (*App, error) {
 	}
 
 	mux.HandleFunc("GET /healthz", handler.Health())
+	mux.HandleFunc("GET /auth/authorize", authHandler.Authorize)
+	mux.HandleFunc("POST /auth/exchange", authHandler.Exchange)
+	mux.HandleFunc("POST /auth/refresh", authHandler.Refresh)
+	mux.HandleFunc("GET /auth/logout", authHandler.Logout)
 	mux.HandleFunc("GET /api/items", itemsHandler.List)
 	mux.HandleFunc("POST /api/items", itemsHandler.Create)
 	mux.HandleFunc("PATCH /api/items/{id}", itemsHandler.Update)
@@ -72,9 +84,6 @@ func New(cfg config.Config) (*App, error) {
 	log.Printf("s3 configured for %s bucket=%s", cfg.S3.Endpoint, cfg.S3.Bucket)
 
 	router := http.Handler(mux)
-	authCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	verifier, err := middleware.NewOIDCVerifier(authCtx, cfg.OIDC)
 	if err != nil {
 		_ = db.Close()
