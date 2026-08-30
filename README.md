@@ -25,10 +25,16 @@ Pantry helps you track household food supplies with a JSON:API backend and an An
 
 ## Docker Deployment
 
-Build and run the full stack (frontend, backend, PostgreSQL, MinIO):
+Create local OIDC config from the example:
 
 ```bash
-docker compose up --build -d
+cp .env.local.example .env.local
+```
+
+Fill in the values for your external OIDC provider, then build and run the stack (frontend, backend, PostgreSQL, MinIO):
+
+```bash
+docker compose --env-file .env.local up --build -d
 ```
 
 Endpoints:
@@ -44,17 +50,17 @@ Stop everything:
 docker compose down
 ```
 
-The frontend container proxies `/api/*` and `/healthz` to the backend container.
+The frontend container proxies `/api/*`, `/auth/authorize`, `/auth/exchange`, `/auth/refresh`, `/auth/logout`, and `/healthz` to the backend container.
 
 ## OIDC Authentication
 
 The stack now uses OIDC for authentication.
 
-- Backend requires a valid OIDC issuer and validates bearer tokens for API routes.
-- Frontend reads OIDC settings from `oidc-config.js`, which is generated from `OIDC_*` environment variables in Docker.
-- `docker-compose.yml` includes a local Keycloak instance and wires both services to the `http://localhost:8081/realms/test` issuer.
+- Backend requires a valid OIDC issuer, client ID, client secret, redirect URI, and validates bearer tokens for API routes.
+- Frontend starts the authorization redirect through `/auth/authorize`; the backend exchanges authorization codes and refresh tokens with the client secret.
+- `docker-compose.yml` reads external OIDC settings from `.env.local` when run with `--env-file .env.local`.
 
-If you use a different identity provider, update `OIDC_ISSUER` on the backend and the `OIDC_*` variables for the frontend.
+Do not expose `OIDC_CLIENT_SECRET` through the frontend config.
 
 ## Development Notes
 

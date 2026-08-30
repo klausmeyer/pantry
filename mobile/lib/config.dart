@@ -4,7 +4,7 @@ const String apiBaseUrl = String.fromEnvironment(
 );
 const String oidcIssuer = String.fromEnvironment(
   'PANTRY_OIDC_ISSUER',
-  defaultValue: 'http://localhost:8081/realms/test',
+  defaultValue: 'https://idp.example.com/realms/pantry',
 );
 const String oidcClientId = String.fromEnvironment(
   'PANTRY_OIDC_CLIENT_ID',

@@ -1,133 +1,160 @@
-import { AuthService } from './auth.service';
-import type { User } from 'oidc-client-ts';
-
-interface EventHandlers {
-  userLoaded?: (user: User) => void;
-  accessTokenExpired?: () => void;
-  silentRenewError?: (err: unknown) => void;
-  userSignedOut?: () => void;
-  userUnloaded?: () => void;
-}
+import { AuthService, AuthUser } from './auth.service';
 
 describe('AuthService', () => {
-  let handlers: EventHandlers;
-  let manager: {
-    events: {
-      addUserLoaded: (cb: (user: User) => void) => void;
-      addAccessTokenExpired: (cb: () => void) => void;
-      addSilentRenewError: (cb: (err: unknown) => void) => void;
-      addUserSignedOut: (cb: () => void) => void;
-      addUserUnloaded: (cb: () => void) => void;
-    };
-    getUser: jasmine.Spy;
-    signinRedirect: jasmine.Spy;
-    signinRedirectCallback: jasmine.Spy;
-    signoutRedirect: jasmine.Spy;
-  };
-  let userManagerFactory: new (...args: any[]) => any;
+  const futureExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
   beforeEach(() => {
-    handlers = {};
-    manager = {
-      events: {
-        addUserLoaded: (cb) => {
-          handlers.userLoaded = cb;
-        },
-        addAccessTokenExpired: (cb) => {
-          handlers.accessTokenExpired = cb;
-        },
-        addSilentRenewError: (cb) => {
-          handlers.silentRenewError = cb;
-        },
-        addUserSignedOut: (cb) => {
-          handlers.userSignedOut = cb;
-        },
-        addUserUnloaded: (cb) => {
-          handlers.userUnloaded = cb;
-        }
-      },
-      getUser: jasmine.createSpy('getUser'),
-      signinRedirect: jasmine.createSpy('signinRedirect').and.returnValue(Promise.resolve()),
-      signinRedirectCallback: jasmine.createSpy('signinRedirectCallback').and.returnValue(Promise.resolve()),
-      signoutRedirect: jasmine.createSpy('signoutRedirect').and.returnValue(Promise.resolve())
-    };
-
-    const UserManagerMock = function () {
-      return manager as any;
-    } as any;
-    userManagerFactory = UserManagerMock;
-
     window.__PANTRY_OIDC__ = {
       enabled: true,
       issuer: 'https://issuer.example',
       clientId: 'pantry-client'
     };
 
-    spyOn(console, 'log');
+    window.localStorage.clear();
+    window.sessionStorage.clear();
     spyOn(console, 'error');
     window.history.replaceState({}, '', '/');
   });
 
   afterEach(() => {
     delete window.__PANTRY_OIDC__;
+    window.localStorage.clear();
+    window.sessionStorage.clear();
     window.history.replaceState({}, '', '/');
   });
 
-  it('initializes and handles auth callback', async () => {
-    const user = { access_token: 'token', expired: false } as User;
-    manager.getUser.and.returnValue(Promise.resolve(user));
-
+  it('initializes and exchanges auth callback through the backend', async () => {
+    const accessToken = jwt('access');
+    const user = token(accessToken);
+    const fetchSpy = mockFetch({
+      data: {
+        attributes: user
+      }
+    });
+    window.sessionStorage.setItem('pantry_oidc_state', 'xyz');
+    window.sessionStorage.setItem('pantry_oidc_nonce', 'nonce-123');
     window.history.replaceState({}, '', '/?code=abc&state=xyz');
 
-    const service = new AuthService(userManagerFactory);
+    const service = new AuthService();
     await service.initialize();
 
-    expect(manager.signinRedirectCallback).toHaveBeenCalled();
-    expect(service.getAccessToken()).toBe('token');
+    expect(fetchSpy).toHaveBeenCalledWith('/auth/exchange', jasmine.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ code: 'abc', nonce: 'nonce-123' })
+    }));
+    expect(service.getAccessToken()).toBe(accessToken);
     expect(window.location.search).toBe('');
   });
 
-  it('requests login when user is missing', async () => {
-    manager.getUser.and.returnValue(Promise.resolve(null));
-
-    const service = new AuthService(userManagerFactory);
+  it('requests an authorization URL when user is missing', async () => {
+    const fetchSpy = mockFetch({
+      data: {
+        attributes: {
+          url: 'https://issuer.example/auth'
+        }
+      }
+    });
+    const service = new AuthService();
+    const redirectSpy = spyOn<any>(service, 'redirectTo');
     await service.initialize();
 
-    expect(manager.signinRedirect).toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalled();
+    expect(String(fetchSpy.calls.mostRecent().args[0])).toContain('/auth/authorize?state=');
+    expect(redirectSpy).toHaveBeenCalledWith('https://issuer.example/auth');
+  });
+
+  it('returns JWT access token when stored user is valid', async () => {
+    const jwtAccessToken = jwt('access');
+    window.localStorage.setItem('pantry_oidc_user', JSON.stringify(token(jwtAccessToken)));
+    const fetchSpy = spyOn(window, 'fetch');
+
+    const service = new AuthService();
+    await service.initialize();
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(service.getAccessToken()).toBe(jwtAccessToken);
+  });
+
+  it('returns ID token when access token is opaque', async () => {
+    const idToken = jwt('id');
+    window.localStorage.setItem('pantry_oidc_user', JSON.stringify({
+      ...token('opaque-token'),
+      id_token: idToken
+    }));
+    spyOn(window, 'fetch');
+
+    const service = new AuthService();
+    await service.initialize();
+
+    expect(service.getAccessToken()).toBe(idToken);
+  });
+
+  it('does not return expired access token', () => {
+    window.localStorage.setItem('pantry_oidc_user', JSON.stringify({
+      ...token('old-token'),
+      expires_at: new Date(Date.now() - 1000).toISOString()
+    }));
+
+    const service = new AuthService();
+
     expect(service.getAccessToken()).toBeNull();
   });
 
-  it('returns access token when user is valid', async () => {
-    const user = { access_token: 'token-123', expired: false } as User;
-    manager.getUser.and.returnValue(Promise.resolve(user));
+  it('redirects through provider logout endpoint', async () => {
+    window.localStorage.setItem('pantry_oidc_user', JSON.stringify({
+      ...token('token-123'),
+      id_token: 'id-token-123'
+    }));
+    const fetchSpy = mockFetch({
+      data: {
+        attributes: {
+          url: 'https://issuer.example/logout'
+        }
+      }
+    });
 
-    const service = new AuthService(userManagerFactory);
-    await service.initialize();
+    const service = new AuthService();
+    const redirectSpy = spyOn<any>(service, 'redirectTo');
+    await service.logout();
 
-    expect(manager.signinRedirect).not.toHaveBeenCalled();
-    expect(service.getAccessToken()).toBe('token-123');
+    expect(fetchSpy).toHaveBeenCalledWith('/auth/logout?id_token_hint=id-token-123');
+    expect(window.localStorage.getItem('pantry_oidc_user')).toBeNull();
+    expect(redirectSpy).toHaveBeenCalledWith('https://issuer.example/logout');
   });
 
-  it('triggers login on access token expiration', async () => {
-    manager.getUser.and.returnValue(Promise.resolve(null));
-
-    const service = new AuthService(userManagerFactory);
-    await service.initialize();
-
-    handlers.accessTokenExpired?.();
-
-    expect(manager.signinRedirect).toHaveBeenCalled();
-  });
-
-  it('stores error on silent renew error', () => {
-    const service = new AuthService(userManagerFactory);
+  it('stores error on invalid callback state', async () => {
     let error = '';
+    window.history.replaceState({}, '', '/?code=abc&state=wrong');
+
+    const service = new AuthService();
     service.error$.subscribe((value) => {
       error = value ?? '';
     });
+    await service.initialize();
 
-    handlers.silentRenewError?.(new Error('renew failed'));
-
-    expect(error).toBe('renew failed');
+    expect(error).toBe('Invalid OIDC callback state');
   });
+
+  function token(accessToken: string): AuthUser {
+    return {
+      access_token: accessToken,
+      refresh_token: 'refresh-token',
+      id_token: 'id-token',
+      token_type: 'Bearer',
+      expires_at: futureExpiry
+    };
+  }
+
+  function jwt(prefix: string): string {
+    return `${prefix}-header.${prefix}-payload.${prefix}-signature`;
+  }
+
+  function mockFetch(payload: unknown): jasmine.Spy<typeof window.fetch> {
+    return spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.api+json'
+      }
+    })));
+  }
 });

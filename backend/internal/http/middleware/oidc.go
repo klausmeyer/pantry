@@ -20,6 +20,10 @@ func NewOIDCVerifier(ctx context.Context, cfg config.OIDCConfig) (*OIDCVerifier,
 	if issuer == "" {
 		return nil, errors.New("oidc issuer is required")
 	}
+	clientID := strings.TrimSpace(cfg.ClientID)
+	if clientID == "" {
+		return nil, errors.New("oidc client id is required")
+	}
 
 	provider, err := oidc.NewProvider(ctx, issuer)
 	if err != nil {
@@ -27,8 +31,7 @@ func NewOIDCVerifier(ctx context.Context, cfg config.OIDCConfig) (*OIDCVerifier,
 	}
 
 	verifier := provider.Verifier(&oidc.Config{
-		SkipClientIDCheck: true,
-		SkipIssuerCheck:   true,
+		ClientID: clientID,
 	})
 	return &OIDCVerifier{verifier: verifier}, nil
 }
@@ -39,7 +42,7 @@ func RequireAuth(verifier *OIDCVerifier, next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions || r.URL.Path == "/healthz" {
+		if r.Method == http.MethodOptions || r.URL.Path == "/healthz" || isPublicAuthPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -64,4 +67,8 @@ func RequireAuth(verifier *OIDCVerifier, next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func isPublicAuthPath(path string) bool {
+	return path == "/auth/authorize" || path == "/auth/exchange" || path == "/auth/refresh" || path == "/auth/logout"
 }

@@ -39,11 +39,11 @@ curl http://localhost:4000/healthz
 
 ## OIDC Authentication
 
-The backend now validates bearer tokens using an OIDC issuer.
+The backend validates bearer tokens and performs confidential-client OIDC token exchanges.
 
-- Configure the issuer with `OIDC_ISSUER`.
-- All API routes require a bearer token; `/healthz` and `OPTIONS` remain public.
-- `docker-compose.yml` provisions a local Keycloak instance and sets `OIDC_ISSUER` to `http://localhost:8081/realms/test`.
+- Configure `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, and `OIDC_REDIRECT_URI`.
+- All API routes require a bearer token; `/healthz`, `/auth/authorize`, `/auth/exchange`, `/auth/refresh`, `/auth/logout`, and `OPTIONS` remain public.
+- For Docker Compose, copy `.env.local.example` to `.env.local` and run with `docker compose --env-file .env.local up --build -d`.
 
 ## Development seeds
 

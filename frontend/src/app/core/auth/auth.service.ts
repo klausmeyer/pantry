@@ -1,87 +1,57 @@
-import { Inject, Injectable, InjectionToken, Optional } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { getOIDCConfig } from './oidc-config';
 
-export const USER_MANAGER_FACTORY = new InjectionToken<typeof UserManager>(
-  'USER_MANAGER_FACTORY'
-);
+export interface AuthUser {
+  access_token: string;
+  refresh_token?: string;
+  id_token?: string;
+  token_type: string;
+  expires_at: string;
+  profile?: Record<string, unknown>;
+}
+
+interface AuthTokenResponse {
+  data?: {
+    attributes?: AuthUser;
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly config = getOIDCConfig();
-  private readonly manager: UserManager | null;
-  private readonly userSubject = new BehaviorSubject<User | null>(null);
+  private readonly userSubject = new BehaviorSubject<AuthUser | null>(null);
   private readonly errorSubject = new BehaviorSubject<string | null>(null);
+  private refreshTimer: number | null = null;
 
   readonly user$ = this.userSubject.asObservable();
   readonly error$ = this.errorSubject.asObservable();
   readonly enabled = this.config.enabled;
 
-  constructor(
-    @Optional() @Inject(USER_MANAGER_FACTORY) userManagerFactory?: typeof UserManager
-  ) {
-    if (!this.config.enabled) {
-      this.manager = null;
-      return;
-    }
-
-    const managerFactory = userManagerFactory ?? UserManager;
-    this.manager = new managerFactory({
-      authority: this.config.issuer,
-      client_id: this.config.clientId,
-      redirect_uri: this.config.redirectUri,
-      silent_redirect_uri: this.config.silentRedirectUri,
-      post_logout_redirect_uri: this.config.postLogoutRedirectUri,
-      response_type: 'code',
-      scope: this.config.scope,
-      userStore: new WebStorageStateStore({ store: window.localStorage }),
-      monitorSession: false,
-      automaticSilentRenew: this.config.silentRenewEnabled
-    });
-
-    this.manager.events.addUserLoaded((user: User) => {
-      this.userSubject.next(user);
-    });
-    this.manager.events.addAccessTokenExpired(() => {
-      void this.requireLogin();
-    });
-    this.manager.events.addSilentRenewError((err: unknown) => {
-      const message = err instanceof Error ? err.message : 'silent renew error';
-      this.errorSubject.next(message);
-      console.error('OIDC silent renew error', err);
-    });
-    this.manager.events.addUserSignedOut(() => {
-      this.userSubject.next(null);
-    });
-    this.manager.events.addUserUnloaded(() => {
-      this.userSubject.next(null);
-    });
-  }
-
   async initialize(): Promise<void> {
-    if (!this.manager) {
+    if (!this.enabled) {
       return;
     }
 
     try {
-      console.log('OIDC config', this.config);
       if (this.isAuthCallback()) {
         try {
-          await this.manager.signinRedirectCallback();
+          await this.handleCallback();
         } finally {
           this.clearAuthCallbackUrl();
         }
       }
 
-      const user = await this.manager.getUser();
-      if (!user || user.expired) {
+      const user = this.loadUser();
+      if (!user || this.isExpired(user)) {
         this.userSubject.next(null);
+        this.clearUser();
         await this.requireLogin();
         return;
       }
 
       this.userSubject.next(user);
+      this.scheduleRefresh(user);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'OIDC initialization failed';
       this.errorSubject.next(message);
@@ -90,41 +60,209 @@ export class AuthService {
   }
 
   login(): void {
-    if (!this.manager) {
+    if (!this.enabled) {
       return;
     }
-    void this.manager.signinRedirect();
+    void this.requireLogin();
   }
 
-  logout(): void {
-    if (!this.manager) {
-      return;
+  logout(): Promise<void> {
+    const user = this.userSubject.value ?? this.loadUser();
+    this.clearRefreshTimer();
+    this.clearUser();
+    this.userSubject.next(null);
+    if (!this.enabled) {
+      return Promise.resolve();
     }
-    void this.manager.signoutRedirect();
+    return this.redirectToLogout(user?.id_token);
+  }
+
+  getAuthHeaderToken(): string | null {
+    const user = this.userSubject.value;
+    if (!user || this.isExpired(user)) {
+      return null;
+    }
+    return this.jwtToken(user);
   }
 
   getAccessToken(): string | null {
-    const user = this.userSubject.value;
-    if (!user || user.expired) {
-      return null;
-    }
-    return user.access_token ?? null;
+    return this.getAuthHeaderToken();
   }
 
   private async requireLogin(): Promise<void> {
-    if (!this.manager) {
+    if (!this.enabled || this.isAuthCallback()) {
       return;
     }
-    if (this.isAuthCallback()) {
-      return;
-    }
+
     try {
-      await this.manager.signinRedirect();
+      const state = this.randomString();
+      const nonce = this.randomString();
+      window.sessionStorage.setItem('pantry_oidc_state', state);
+      window.sessionStorage.setItem('pantry_oidc_nonce', nonce);
+
+      const response = await fetch(`/auth/authorize?state=${encodeURIComponent(state)}&nonce=${encodeURIComponent(nonce)}`);
+      if (!response.ok) {
+        throw new Error('OIDC authorization URL request failed');
+      }
+      const payload = (await response.json()) as { data?: { attributes?: { url?: string } } };
+      const url = payload.data?.attributes?.url;
+      if (!url) {
+        throw new Error('OIDC authorization URL missing');
+      }
+      this.redirectTo(url);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'OIDC login failed';
       this.errorSubject.next(message);
       console.error('OIDC login error', err);
     }
+  }
+
+  private async handleCallback(): Promise<void> {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') ?? '';
+    const state = params.get('state') ?? '';
+    const expectedState = window.sessionStorage.getItem('pantry_oidc_state') ?? '';
+    const nonce = window.sessionStorage.getItem('pantry_oidc_nonce') ?? '';
+    window.sessionStorage.removeItem('pantry_oidc_state');
+    window.sessionStorage.removeItem('pantry_oidc_nonce');
+
+    if (!code || !state || !expectedState || state !== expectedState || !nonce) {
+      throw new Error('Invalid OIDC callback state');
+    }
+
+    const user = await this.postToken('/auth/exchange', { code, nonce });
+    this.storeUser(user);
+    this.userSubject.next(user);
+    this.scheduleRefresh(user);
+  }
+
+  private async refresh(user: AuthUser): Promise<void> {
+    if (!user.refresh_token) {
+      await this.requireLogin();
+      return;
+    }
+
+    try {
+      const refreshed = await this.postToken('/auth/refresh', { refresh_token: user.refresh_token });
+      if (!refreshed.refresh_token) {
+        refreshed.refresh_token = user.refresh_token;
+      }
+      this.storeUser(refreshed);
+      this.userSubject.next(refreshed);
+      this.scheduleRefresh(refreshed);
+    } catch (err) {
+      this.clearUser();
+      this.userSubject.next(null);
+      const message = err instanceof Error ? err.message : 'OIDC refresh failed';
+      this.errorSubject.next(message);
+      await this.requireLogin();
+    }
+  }
+
+  private async postToken(url: string, body: Record<string, string>): Promise<AuthUser> {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      throw new Error('OIDC token request failed');
+    }
+
+    const payload = (await response.json()) as AuthTokenResponse;
+    const user = payload.data?.attributes;
+    if (!user?.access_token || !user.expires_at) {
+      throw new Error('OIDC token response missing credentials');
+    }
+    return user;
+  }
+
+  private async redirectToLogout(idTokenHint?: string): Promise<void> {
+    try {
+      const query = idTokenHint ? `?id_token_hint=${encodeURIComponent(idTokenHint)}` : '';
+      const response = await fetch(`/auth/logout${query}`);
+      if (!response.ok) {
+        throw new Error('OIDC logout URL request failed');
+      }
+      const payload = (await response.json()) as { data?: { attributes?: { url?: string } } };
+      this.redirectTo(payload.data?.attributes?.url ?? this.config.postLogoutRedirectUri);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'OIDC logout failed';
+      this.errorSubject.next(message);
+      console.error('OIDC logout error', err);
+      this.redirectTo(this.config.postLogoutRedirectUri);
+    }
+  }
+
+  private loadUser(): AuthUser | null {
+    const raw = window.localStorage.getItem('pantry_oidc_user');
+    if (!raw) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw) as AuthUser;
+    } catch {
+      return null;
+    }
+  }
+
+  private storeUser(user: AuthUser): void {
+    window.localStorage.setItem('pantry_oidc_user', JSON.stringify(user));
+  }
+
+  private clearUser(): void {
+    window.localStorage.removeItem('pantry_oidc_user');
+  }
+
+  private isExpired(user: AuthUser): boolean {
+    return new Date(user.expires_at).getTime() <= Date.now() + 5000;
+  }
+
+  private jwtToken(user: AuthUser): string | null {
+    if (this.isJWT(user.access_token)) {
+      return user.access_token;
+    }
+    if (user.id_token && this.isJWT(user.id_token)) {
+      return user.id_token;
+    }
+    return null;
+  }
+
+  private isJWT(token: string): boolean {
+    return token.split('.').length === 3;
+  }
+
+  private scheduleRefresh(user: AuthUser): void {
+    this.clearRefreshTimer();
+    if (!user.refresh_token) {
+      return;
+    }
+    const refreshIn = Math.max(new Date(user.expires_at).getTime() - Date.now() - 60000, 5000);
+    this.refreshTimer = window.setTimeout(() => {
+      void this.refresh(user);
+    }, refreshIn);
+  }
+
+  private clearRefreshTimer(): void {
+    if (this.refreshTimer != null) {
+      window.clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
+  private randomString(): string {
+    const bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    return btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+
+  private redirectTo(url: string): void {
+    window.location.assign(url);
   }
 
   private isAuthCallback(): boolean {

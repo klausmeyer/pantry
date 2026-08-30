@@ -3,5 +3,25 @@
     "target": "https://pantry.home.klaus-meyer.net",
     "secure": true,
     "changeOrigin": true
+  },
+  "/auth/authorize": {
+    "target": "https://pantry.home.klaus-meyer.net",
+    "secure": true,
+    "changeOrigin": true
+  },
+  "/auth/exchange": {
+    "target": "https://pantry.home.klaus-meyer.net",
+    "secure": true,
+    "changeOrigin": true
+  },
+  "/auth/refresh": {
+    "target": "https://pantry.home.klaus-meyer.net",
+    "secure": true,
+    "changeOrigin": true
+  },
+  "/auth/logout": {
+    "target": "https://pantry.home.klaus-meyer.net",
+    "secure": true,
+    "changeOrigin": true
   }
 }

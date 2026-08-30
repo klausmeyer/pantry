@@ -5,7 +5,7 @@ import { ItemsApiService } from '../../core/api/items-api.service';
 import { CreateItemInput, Item, ItemSortBy, SortOrder } from '../../core/models/item';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
-import type { User } from 'oidc-client-ts';
+import type { AuthUser } from '../../core/auth/auth.service';
 
 @Component({
     selector: 'app-items-page',
@@ -19,7 +19,7 @@ export class ItemsPageComponent {
   private readonly auth = inject(AuthService);
   private readonly itemsListStateStorageKey = 'pantry_items_list_state_v1';
 
-  readonly user$: Observable<User | null> = this.auth.user$;
+  readonly user$: Observable<AuthUser | null> = this.auth.user$;
 
   locale: Locale = 'en';
   readonly expiringSoonDays = 14;
@@ -138,7 +138,6 @@ export class ItemsPageComponent {
       edit: 'Edit',
       delete: 'Delete',
       addMore: 'Add more',
-      logout: 'Logout',
       expiresToday: 'expires today',
       overdueSuffix: 'overdue',
       daysLeftSuffix: 'left',
@@ -220,7 +219,6 @@ export class ItemsPageComponent {
       edit: 'Bearbeiten',
       delete: 'Löschen',
       addMore: 'Mehr hinzufügen',
-      logout: 'Abmelden',
       expiresToday: 'läuft heute ab',
       overdueSuffix: 'abgelaufen',
       daysLeftSuffix: 'verbleibend',
@@ -732,8 +730,13 @@ export class ItemsPageComponent {
     return this.t(`packaging_${packaging}`);
   }
 
-  jwtUsername(user: User | null): string {
-    const token = user?.access_token;
+  userEmail(user: AuthUser | null): string {
+    const profileEmail = this.profileEmail(user?.profile);
+    if (profileEmail) {
+      return profileEmail;
+    }
+
+    const token = user?.access_token?.split('.').length === 3 ? user.access_token : user?.id_token;
     if (!token) {
       return '';
     }
@@ -743,23 +746,20 @@ export class ItemsPageComponent {
     }
     try {
       const payload = JSON.parse(this.decodeBase64Url(parts[1])) as Record<string, unknown>;
-      const name = payload['name'];
-      const givenName = payload['given_name'];
-      const familyName = payload['family_name'];
-      const fullName =
-        typeof name === 'string'
-          ? name
-          : typeof givenName === 'string' || typeof familyName === 'string'
-            ? [givenName, familyName].filter((value) => typeof value === 'string' && value.length > 0).join(' ')
-            : payload['preferred_username'] ?? payload['username'] ?? payload['sub'];
-      return typeof fullName === 'string' ? fullName : '';
+      const email = payload['email'];
+      return typeof email === 'string' ? email : '';
     } catch {
       return '';
     }
   }
 
-  logout(): void {
-    this.auth.logout();
+  private profileEmail(profile: Record<string, unknown> | undefined): string {
+    if (!profile) {
+      return '';
+    }
+
+    const email = profile['email'];
+    return typeof email === 'string' ? email : '';
   }
 
   private decodeBase64Url(input: string): string {

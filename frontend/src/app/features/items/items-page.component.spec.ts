@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ItemsApiService } from '../../core/api/items-api.service';
 import { AuthService } from '../../core/auth/auth.service';
+import type { AuthUser } from '../../core/auth/auth.service';
 import type { Item } from '../../core/models/item';
-import type { User } from 'oidc-client-ts';
 import type { Observable } from 'rxjs';
 import { ItemsPageComponent } from './items-page.component';
 
 describe('ItemsPageComponent', () => {
   let api: jasmine.SpyObj<ItemsApiService>;
-  let auth: { user$: Observable<User | null>; logout: jasmine.Spy };
+  let auth: { user$: Observable<AuthUser | null> };
 
   const makeItem = (overrides: Partial<Item> = {}): Item => ({
     id: '1',
@@ -42,8 +42,7 @@ describe('ItemsPageComponent', () => {
     api.getPicturePreviewUrl.and.returnValue(of('https://cdn.example/preview.png'));
 
     auth = {
-      user$: of(null),
-      logout: jasmine.createSpy('logout')
+      user$: of(null)
     };
 
     TestBed.configureTestingModule({
@@ -154,15 +153,41 @@ describe('ItemsPageComponent', () => {
     jasmine.clock().uninstall();
   });
 
-  it('parses username from JWT payload', () => {
+  it('parses email from JWT payload', () => {
     const fixture = TestBed.createComponent(ItemsPageComponent);
     const component = fixture.componentInstance;
-    const payload = { given_name: 'Avery', family_name: 'Ng' };
+    const payload = { email: 'avery@example.com' };
     const token = ['header', toBase64Url(JSON.stringify(payload)), 'sig'].join('.');
 
-    const name = component.jwtUsername({ access_token: token } as any);
+    const email = component.userEmail({ access_token: token } as any);
 
-    expect(name).toBe('Avery Ng');
+    expect(email).toBe('avery@example.com');
+  });
+
+  it('uses ID token email when access token is opaque', () => {
+    const fixture = TestBed.createComponent(ItemsPageComponent);
+    const component = fixture.componentInstance;
+    const payload = { email: 'avery@example.com' };
+    const idToken = ['header', toBase64Url(JSON.stringify(payload)), 'sig'].join('.');
+
+    const email = component.userEmail({ access_token: 'opaque-token', id_token: idToken } as any);
+
+    expect(email).toBe('avery@example.com');
+  });
+
+  it('uses profile email before token payload', () => {
+    const fixture = TestBed.createComponent(ItemsPageComponent);
+    const component = fixture.componentInstance;
+    const payload = { email: 'token@example.com' };
+    const idToken = ['header', toBase64Url(JSON.stringify(payload)), 'sig'].join('.');
+
+    const email = component.userEmail({
+      access_token: 'opaque-token',
+      id_token: idToken,
+      profile: { email: 'profile@example.com' }
+    } as any);
+
+    expect(email).toBe('profile@example.com');
   });
 });
 
